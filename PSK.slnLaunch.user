@@ -1,0 +1,15 @@
+[
+  {
+    "Name": "New Profile",
+    "Projects": [
+      {
+        "Path": "psk.client\\psk.client.esproj",
+        "Action": "Start"
+      },
+      {
+        "Path": "PSK.Server\\PSK.Server.csproj",
+        "Action": "Start"
+      }
+    ]
+  }
+]

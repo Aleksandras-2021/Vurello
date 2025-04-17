@@ -1,9 +1,10 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using PSK.Server.Data.Entities;
 
 namespace PSK.Server.Data
 {
-    public class AppDbContext : DbContext
+    public class AppDbContext : IdentityDbContext<User>
     {
         public AppDbContext(DbContextOptions<AppDbContext> options) : base(options) { }
 
@@ -18,6 +19,11 @@ namespace PSK.Server.Data
                 .Property(t => t.Id)
                 .HasDefaultValueSql("gen_random_uuid()");
 
+            modelBuilder.Entity<Team>()
+                .HasMany(t => t.Users)
+                .WithMany(u => u.Teams);
+
+
             modelBuilder.Entity<Board>()
                 .HasKey(b => b.Id);
 
@@ -29,6 +35,8 @@ namespace PSK.Server.Data
                 .HasOne(b => b.Team)
                 .WithMany(t => t.Boards)
                 .HasForeignKey(b => b.TeamId);
+
+
 
             base.OnModelCreating(modelBuilder);
         }

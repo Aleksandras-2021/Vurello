@@ -8,5 +8,8 @@ namespace PSK.Server.Data.Entities
         [Metadata("prompt", "Team name")]
         public string Name { get; set; }
 
+        [Metadata("ignore", "true")]
+        public string UserId { get; set; }
+
     }
 }

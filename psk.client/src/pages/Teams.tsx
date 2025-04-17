@@ -2,18 +2,20 @@ import React, { useEffect, useState } from 'react';
 import { List, Typography, Spin, Button } from 'antd';
 import { PlusOutlined } from '@ant-design/icons';
 import { Link } from 'react-router-dom';
-import { api } from '../API/API.tsx';
-import DynamicForm from '../API/DynamicForm.tsx'
-
+import DynamicForm from '../components/DynamicForm.tsx'
+import { useAuth } from '../components/AuthContext';
+import {api } from "../components/API"
 const Teams = () => {
+    const { userId } = useAuth();
+
     const [teams, setTeams] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
 
     const fetchTeams = async () => {
         try {
-            const data = await api.get('team');
-            setTeams(Array.isArray(data) ? data : [data]);
-            console.log(data);
+            const response = await api.get('team');;
+            setTeams(response.data);
+            console.log(response.data);
         } catch (error) {
             console.error('Failed to fetch teams:', error);
         } finally {
@@ -36,12 +38,14 @@ const Teams = () => {
                 formTitle="Create new team"
                 schemaName="TeamCreate"
                 apiUrl="team"
+                type='post'
                 onSuccess={fetchTeams}
                 trigger={
                     <Button type="primary" icon={<PlusOutlined />}>
                         New Team
                     </Button>
                 }
+                neededData={{ userId }}
             />
 
             <Typography>All Teams</Typography>

@@ -1,18 +1,38 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import Teams from './UI/Teams';
-import TeamBoards from './UI/TeamBoards';
-
+import Teams from './pages/Teams';
+import TeamBoards from './pages/TeamBoards';
+import Auth from './pages/Auth';
+import { AuthProvider } from './components/AuthContext';
+import PrivateRoute from './components/PrivateRoute';
+import Navbar from './components/Navbar';
 
 const App = () => {
     return (
-        <Router>
-            <Routes>
-                <Route path="/" element={<Navigate to="/teams" />} />
-                <Route path="/teams" element={<Teams />} />
-                <Route path="/teams/:teamId" element={<TeamBoards />} />
-            </Routes>
-        </Router>
+        <AuthProvider>
+            <Router>
+                <Navbar/>
+                <Routes>
+                    <Route path="/auth" element={<Auth />} />
+
+                    <Route
+                        path="*"
+                        element={
+                            <PrivateRoute>
+                                <Routes>
+                                    <Route path="/" element={<Navigate to="/teams" replace />} />
+                                    <Route path="/teams" element={<Teams />} />
+                                    <Route path="/teams/:teamId" element={<TeamBoards />} />
+
+
+
+                                </Routes>
+                            </PrivateRoute>
+                        }
+                    />
+                </Routes>
+            </Router>
+        </AuthProvider>
     );
 };
 

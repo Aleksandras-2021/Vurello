@@ -1,9 +1,10 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using PSK.Server.Data.Entities;
 
 namespace PSK.Controllers
 {
-
+    [Authorize]
     [ApiController]
     [Route("api/board")]
     public class BoardController : GenericController<Board, BoardCreate, BoardUpdate>

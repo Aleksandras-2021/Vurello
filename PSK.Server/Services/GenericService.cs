@@ -1,15 +1,21 @@
 ﻿using Ardalis.Specification;
 using Mapster;
+using System.Security.Claims;
 
 public interface IGenericService<TEntity, TCreate, TUpdate>
     where TEntity : class
     where TCreate : class
     where TUpdate : class
 {
-    Task<object> GetAsync(ISpecification<TEntity> spec);
+    Task<List<TEntity>> GetAllAsync(ISpecification<TEntity> spec);
+    Task<TEntity> GetSingleAsync(ISingleResultSpecification<TEntity> spec);
     Task<TEntity> CreateAsync(TCreate create);
     Task<TEntity> UpdateAsync(Guid id, TUpdate update);
     Task DeleteAsync(Guid id);
+    Task<bool> AuthorizeAsync(Guid id, ClaimsPrincipal user);
+    Task<bool> AuthorizeAsync(TCreate create, ClaimsPrincipal user);
+    Task<bool> AuthorizeAsync(TUpdate update, Guid id, ClaimsPrincipal user);
+    Task OnCreatingAsync(TEntity entity, TCreate create);
 }
 
 public class GenericService<TEntity, TCreate, TUpdate> : IGenericService<TEntity, TCreate, TUpdate>
@@ -24,21 +30,24 @@ public class GenericService<TEntity, TCreate, TUpdate> : IGenericService<TEntity
         _repository = repository;
     }
 
-    public async Task<object> GetAsync(ISpecification<TEntity> spec)
+    public async Task<List<TEntity>> GetAllAsync(ISpecification<TEntity> spec)
     {
         var entities = await _repository.ListAsync(spec);
 
-        if (entities.Count == 1)
-        {
-            return entities.First();
-        }
-
         return entities;
+    }
+
+    public async Task<TEntity> GetSingleAsync(ISingleResultSpecification<TEntity> spec)
+    {
+        var entity = await _repository.SingleOrDefaultAsync(spec);
+
+        return entity;
     }
 
     public async Task<TEntity> CreateAsync(TCreate create)
     {
         var entity = create.Adapt<TEntity>();
+        await OnCreatingAsync(entity, create);
         await _repository.AddAsync(entity);
         return entity;
     }
@@ -52,6 +61,7 @@ public class GenericService<TEntity, TCreate, TUpdate> : IGenericService<TEntity
         }
 
         update.Adapt(entity);
+
         await _repository.UpdateAsync(entity);
 
         return entity;
@@ -59,6 +69,7 @@ public class GenericService<TEntity, TCreate, TUpdate> : IGenericService<TEntity
 
     public async Task DeleteAsync(Guid id)
     {
+
         var entity = await _repository.GetByIdAsync(id);
         if (entity == null)
         {
@@ -66,5 +77,31 @@ public class GenericService<TEntity, TCreate, TUpdate> : IGenericService<TEntity
         }
 
         await _repository.DeleteAsync(entity);
+    }
+
+
+    public virtual async Task<bool> AuthorizeAsync(Guid id, ClaimsPrincipal user)
+    {
+        await Task.CompletedTask;
+
+        return true;
+    }
+
+    public virtual async Task<bool> AuthorizeAsync(TCreate create, ClaimsPrincipal user)
+    {
+        await Task.CompletedTask;
+
+        return true;
+    }
+
+    public virtual async Task<bool> AuthorizeAsync(TUpdate update, Guid id, ClaimsPrincipal user)
+    {
+        await Task.CompletedTask;
+
+        return true;
+    }
+    public virtual async Task OnCreatingAsync(TEntity entity, TCreate create)
+    {
+        await Task.CompletedTask;
     }
 }
