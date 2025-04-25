@@ -1,16 +1,45 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { Button, Spin, Typography, List, Card } from 'antd';
-import { PlusOutlined } from '@ant-design/icons';
 import DynamicForm from '../components/DynamicForm';
+import { Button, Spin, Typography,Modal, List, Card, Table, Space } from 'antd';
+import { PlusOutlined } from '@ant-design/icons';
 import { api } from "../components/API";
-
 const { Title } = Typography;
+
 
 const TeamBoards = () => {
     const { teamId } = useParams();
     const [team, setTeam] = useState<any>(null);
     const [loading, setLoading] = useState(true);
+    const [membersVisible, setMembersVisible] = useState(false);
+    const [members, setMembers] = useState<any[]>([]);
+
+    const columns = [
+        {
+            title: 'Name',
+            dataIndex: 'userName',
+            key: 'userName',
+        },
+        {
+            title: 'Actions',
+            key: 'actions',
+            render: (_, record) => (
+                <Space>
+                    <Button type="link" danger>View</Button>
+                    <Button type="link">Remove</Button>
+                </Space>
+            )
+        }
+    ];
+
+    const fetchMembers = async () => {
+        try {
+            const response = await api.get(`team/${teamId}/members`);
+            setMembers(response.data);
+        } catch (error) {
+            console.error('Failed to fetch team members:', error);
+        }
+    };
 
     const fetchTeam = async () => {
         try {
@@ -23,8 +52,13 @@ const TeamBoards = () => {
         }
     };
 
+    const handleShowMembers = async () => {
+        setMembersVisible(true);
+    };
+
     useEffect(() => {
         fetchTeam();
+        fetchMembers();
     }, [teamId]);
 
     if (loading) {
@@ -82,6 +116,28 @@ const TeamBoards = () => {
                 )}
                 locale={{ emptyText: "No boards found. Create a new board to get started." }}
             />
+
+            <Button
+                type="primary"
+                style={{ marginTop: 16 }}
+                onClick={handleShowMembers}
+            >
+                My Team
+            </Button>
+
+            <Modal
+                title="Team Members"
+                open={membersVisible}
+                onCancel={() => setMembersVisible(false)}
+                footer={null}
+            >
+                <Table
+                    dataSource={members}
+                    columns={columns}
+                    rowKey="id"
+                    pagination={false}
+                />
+            </Modal>
         </div>
     );
 };

@@ -9,7 +9,6 @@ using System.Security.Claims;
 public interface ITeamService : IGenericService<Team, TeamCreate, TeamUpdate>
 {
     void AddUserToTeam(Team team, User user);
-
 }
 
 public class TeamService : GenericService<Team, TeamCreate, TeamUpdate>, ITeamService
@@ -34,13 +33,12 @@ public class TeamService : GenericService<Team, TeamCreate, TeamUpdate>, ITeamSe
 
     public void AddUserToTeam(Team team, User user)
     {
-        if(user == null || team == null || team.Users.Any(u => u.Id == user.Id))
+        if (user == null || team == null || team.Users.Any(u => u.Id == user.Id))
         {
             return;
         }
 
         team.Users.Add(user);
-
     }
 
 }

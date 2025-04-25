@@ -28,7 +28,7 @@ namespace PSK.Controllers
             var userId = _userContext.GetUserId(User);
 
             var teams = await _teamService.GetAllAsync(new GetUserTeamsSpec(userId));
-           
+
             return Ok(teams);
         }
 
@@ -38,6 +38,15 @@ namespace PSK.Controllers
             var team = await _teamService.GetSingleAsync(new GetTeamByIdSpec(id));
 
             return Ok(team);
+        }
+
+        [HttpGet("{id}/members")]
+        public async Task<IActionResult> GetTeamMembers(Guid id)
+        {
+            var team = await _teamService.GetSingleAsync(new GetTeamByIdSpec(id));
+            var members = team.Users.Select(u => new { u.Id, u.UserName }).ToList();
+
+            return Ok(members);
         }
     }
 }
