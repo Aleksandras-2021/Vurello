@@ -83,6 +83,11 @@ const DynamicForm: React.FC<DynamicFormProps> = ({
                         if (value["x-hidden"] === "true") {
                             uiField["ui:widget"] = "password";
                         }
+                        if (value["x-enum"]) {
+                            const options = value["x-enum"].split(',');
+                            filteredSchema.properties[key].enum = options;
+                            uiField["ui:widget"] = "select";
+                        }
 
                         newUiSchema[key] = uiField;
                     });

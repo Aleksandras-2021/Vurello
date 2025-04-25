@@ -8,5 +8,7 @@ namespace PSK.Server.Data.Entities
         public string Name { get; set; }
         public Guid TeamId { get; set; }
         public Team Team { get; set; }
+        public ICollection<Job> Jobs { get; set; } = new List<Job>();
+
     }
 }

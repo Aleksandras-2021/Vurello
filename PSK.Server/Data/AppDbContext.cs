@@ -10,6 +10,8 @@ namespace PSK.Server.Data
 
         public DbSet<Team> Teams { get; set; }
         public DbSet<Board> Boards { get; set; }
+        public DbSet<Job> Jobs { get; set; }
+
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             modelBuilder.Entity<Team>()
@@ -36,6 +38,17 @@ namespace PSK.Server.Data
                 .WithMany(t => t.Boards)
                 .HasForeignKey(b => b.TeamId);
 
+            modelBuilder.Entity<Job>()
+                .HasKey(j => j.Id);
+
+            modelBuilder.Entity<Job>()
+                .Property(j => j.Id)
+                .HasDefaultValueSql("gen_random_uuid()");
+
+            modelBuilder.Entity<Job>()
+                .HasOne(j => j  .Board)
+                .WithMany(b => b.Jobs)
+                .HasForeignKey(t => t.BoardId);
 
 
             base.OnModelCreating(modelBuilder);

@@ -11,9 +11,13 @@ using System.Text;
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
-
-builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddControllers()
+
+    .AddJsonOptions(options =>
+    {
+        options.JsonSerializerOptions.ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles;
+    }); builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
 {
     c.SchemaFilter<MetadataSchemaFilter>();
@@ -48,6 +52,7 @@ builder.Services.AddScoped(typeof(GenericRepository<>));
 builder.Services.AddScoped<IUserContext, UserContext>();
 builder.Services.AddScoped<IBoardService, BoardService>();
 builder.Services.AddScoped<ITeamService, TeamService>();
+builder.Services.AddScoped<IJobService, JobService>();
 
 builder.Services.AddIdentity<User, IdentityRole>(options =>
 {

@@ -1,6 +1,5 @@
 ﻿using Ardalis.Specification;
 using PSK.Server.Data.Entities;
-using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
 
 namespace PSK.Server.Specifications.TeamSpecifications
 {
@@ -9,7 +8,8 @@ namespace PSK.Server.Specifications.TeamSpecifications
         public GetTeamByIdSpec(Guid teamId)
         {
             Query
-                .Where(t => t.Id == teamId);
+                .Where(t => t.Id == teamId)
+                .Include(t => t.Boards);
         }
     }
 }

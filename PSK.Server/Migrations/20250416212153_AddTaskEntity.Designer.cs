@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using PSK.Server.Data;
@@ -11,9 +12,11 @@ using PSK.Server.Data;
 namespace PSK.Server.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250416212153_AddTaskEntity")]
+    partial class AddTaskEntity
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -175,7 +178,7 @@ namespace PSK.Server.Migrations
                     b.ToTable("Boards");
                 });
 
-            modelBuilder.Entity("PSK.Server.Data.Entities.Job", b =>
+            modelBuilder.Entity("PSK.Server.Data.Entities.Task", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -201,7 +204,7 @@ namespace PSK.Server.Migrations
 
                     b.HasIndex("BoardId");
 
-                    b.ToTable("Jobs");
+                    b.ToTable("Tasks");
                 });
 
             modelBuilder.Entity("PSK.Server.Data.Entities.Team", b =>
@@ -361,10 +364,10 @@ namespace PSK.Server.Migrations
                     b.Navigation("Team");
                 });
 
-            modelBuilder.Entity("PSK.Server.Data.Entities.Job", b =>
+            modelBuilder.Entity("PSK.Server.Data.Entities.Task", b =>
                 {
                     b.HasOne("PSK.Server.Data.Entities.Board", "Board")
-                        .WithMany("Jobs")
+                        .WithMany("Tasks")
                         .HasForeignKey("BoardId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -389,7 +392,7 @@ namespace PSK.Server.Migrations
 
             modelBuilder.Entity("PSK.Server.Data.Entities.Board", b =>
                 {
-                    b.Navigation("Jobs");
+                    b.Navigation("Tasks");
                 });
 
             modelBuilder.Entity("PSK.Server.Data.Entities.Team", b =>
