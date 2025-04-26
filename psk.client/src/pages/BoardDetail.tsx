@@ -3,6 +3,7 @@ import { useParams, Link } from 'react-router-dom';
 import { Card, Typography, Spin, Button, List, Row, Col, Tag } from 'antd'; import { PlusOutlined, ArrowLeftOutlined } from '@ant-design/icons';
 import DynamicForm from '../components/DynamicForm';
 import { api } from "../components/API";
+import { EditOutlined } from '@ant-design/icons';
 
 const { Title, Text } = Typography;
 
@@ -11,6 +12,7 @@ const BoardDetail = () => {
     const [board, setBoard] = useState<any>(null);
     const [jobs, setJobs] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
+    const [teamMembers, setTeamMembers] = useState<any[]>([]);
 
     const fetchBoardData = async () => {
         setLoading(true);
@@ -29,9 +31,30 @@ const BoardDetail = () => {
         }
     };
 
+    const fetchTeamMembers = async () => {
+        try {
+            if (!board?.teamId) return;
+
+            const response = await api.get(`team/${board.teamId}/members`);
+
+            setTeamMembers(response.data.map((member: any) => ({
+                value: member.id,
+                label: member.userName
+            })));
+        } catch (error) {
+            console.error('Failed to fetch team members:', error);
+        }
+    };
+
     useEffect(() => {
         fetchBoardData();
     }, [boardId]);
+
+    useEffect(() => {
+        if (board?.teamId) {
+            fetchTeamMembers();
+        }
+    }, [board?.teamId]);
 
     if (loading) {
         return <Spin size="large" />;
@@ -63,6 +86,7 @@ const BoardDetail = () => {
                             </Button>
                         }
                         neededData={{ boardId }}
+                        dropdownOptions={teamMembers}
                     />
                 </Col>
             </Row>
@@ -77,9 +101,40 @@ const BoardDetail = () => {
                         <List.Item>
                             <Card
                                 title={job.name}
-                                extra={<Tag color={getStatusColor(job.status)}>{job.status}</Tag>}
+                                extra={
+                                    <Row gutter={8}>
+                                        <Col>
+                                            <Tag color={getStatusColor(job.status)}>{job.status}</Tag>
+                                        </Col>
+                                        <Col>
+                                            <DynamicForm
+                                                formTitle={`Edit Task: ${job.name}`}
+                                                schemaName="JobUpdate"
+                                                apiUrl={`job/${job.id}`}
+                                                type="patch"
+                                                onSuccess={fetchBoardData}
+                                                trigger={
+                                                    <Button
+                                                        icon={<EditOutlined />}
+                                                        size="small"
+                                                        type="text"
+                                                    />
+                                                }
+                                                neededData={{ boardId }}
+                                                currentData={job}
+                                                dropdownOptions={teamMembers}
+                                            />
+                                        </Col>
+                                    </Row>
+                                }
                             >
                                 <p>{job.description}</p>
+                                {job.assignedMemberId && (
+                                    <p>
+                                        <strong>Assigned to:</strong>{' '}
+                                        {teamMembers.find((member) => member.value === job.assignedMemberId)?.label || 'Unknown'}
+                                    </p>
+                                )}
                             </Card>
                         </List.Item>
                     )}

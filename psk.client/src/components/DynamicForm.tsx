@@ -6,6 +6,7 @@ import axios from 'axios';
 import { Modal } from 'antd';
 import { ButtonProps } from 'antd';
 import { api } from './API';
+import UuidDropdownWidget from './UuidDropdownWidget';
 
 
 interface DynamicFormProps {
@@ -18,6 +19,7 @@ interface DynamicFormProps {
     trigger?: ReactElement<Partial<ButtonProps> & { onClick?: () => void }>;
     noModal?: boolean;
     currentData?: Record<string, any>;
+    dropdownOptions?: { value: string; label: string }[];
 }
 
 const DynamicForm: React.FC<DynamicFormProps> = ({
@@ -30,11 +32,15 @@ const DynamicForm: React.FC<DynamicFormProps> = ({
     noModal,
     type,
     currentData = {},
+    dropdownOptions,
 }) => {
     const [formSchema, setFormSchema] = useState<RJSFSchema | null>(null);
     const [isModalVisible, setIsModalVisible] = useState(false);
     const [uiSchema, setUiSchema] = useState<any>({});
     const [formData, setFormData] = useState<Record<string, any>>({});
+    const widgets = {
+        uuidDropdown: UuidDropdownWidget
+    };
 
     useEffect(() => {
         const fetchSwaggerSchema = async () => {
@@ -89,6 +95,12 @@ const DynamicForm: React.FC<DynamicFormProps> = ({
                             uiField["ui:widget"] = "select";
                         }
 
+                        if (value["x-dropdown"]) {
+                            filteredSchema.properties[key].enum = dropdownOptions?.map(option => option.value) || [];
+                            filteredSchema.properties[key].enumNames = dropdownOptions?.map(option => option.label) || [];
+                            uiField["ui:widget"] = "uuidDropdown";
+                        }
+
                         newUiSchema[key] = uiField;
                     });
                 }
@@ -103,7 +115,7 @@ const DynamicForm: React.FC<DynamicFormProps> = ({
 
         handleCloseModal();
         fetchSwaggerSchema();
-    }, [schemaName]);
+    }, [schemaName, dropdownOptions]);
 
     useEffect(() => {
         if (type === 'patch' && currentData && formSchema) {
@@ -165,6 +177,7 @@ const DynamicForm: React.FC<DynamicFormProps> = ({
                         validator={validator}
                         uiSchema={uiSchema}
                         formData={formData}
+                        widgets={widgets}
                         onSubmit={handleSubmit}
                     />
                 ) : (
@@ -185,6 +198,7 @@ const DynamicForm: React.FC<DynamicFormProps> = ({
                             validator={validator}
                             uiSchema={uiSchema}
                             formData={formData}
+                            widgets={widgets}
                             onSubmit={handleSubmit}
                         />
                     ) : (

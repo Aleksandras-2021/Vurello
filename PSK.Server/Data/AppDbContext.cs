@@ -50,6 +50,11 @@ namespace PSK.Server.Data
                 .WithMany(b => b.Jobs)
                 .HasForeignKey(t => t.BoardId);
 
+            modelBuilder.Entity<Job>()
+                .HasOne(j => j.AssignedMember)
+                .WithMany(a => a.AssignedJobs)
+                .HasForeignKey(t => t.AssignedMemberId);
+
 
             base.OnModelCreating(modelBuilder);
         }

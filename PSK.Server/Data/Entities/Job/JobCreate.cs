@@ -15,5 +15,10 @@ namespace PSK.Server.Data.Entities
 
         [Metadata("ignore", "true")]
         public Guid BoardId { get; set; }
+
+        [Metadata("prompt", "Assigned Member")]
+        [Metadata("dropdown", "Assigned Member")]
+        public Guid? AssignedMemberId { get; set; }
+
     }
 }

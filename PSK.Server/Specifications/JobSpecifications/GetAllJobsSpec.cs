@@ -8,7 +8,8 @@ namespace PSK.Server.Specifications.JobSpecifications
         public GetAllJobsSpec()
         {
             Query
-                .Include(j => j.Board);
+                .Include(j => j.Board)
+                .Include(j => j.AssignedMember);
         }
     }
 }
