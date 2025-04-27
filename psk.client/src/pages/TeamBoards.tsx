@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import {Link, useParams } from 'react-router-dom';
 import DynamicForm from '../components/DynamicForm';
-import { Button, Spin, Typography,Modal, List, Card, Table, Space } from 'antd';
-import { PlusOutlined } from '@ant-design/icons';
-import { api } from "../components/API";
-const { Title } = Typography;
+import { Button, Spin, Modal, Table, Space, Typography, Card, Divider, Layout, Collapse, List } from 'antd';
+import { ArrowLeftOutlined, PlusOutlined, UserOutlined } from '@ant-design/icons';
+import { api } from '../components/API';
 
+const { Title } = Typography;
 
 const TeamBoards = () => {
     const { teamId } = useParams();
@@ -13,6 +13,8 @@ const TeamBoards = () => {
     const [loading, setLoading] = useState(true);
     const [membersVisible, setMembersVisible] = useState(false);
     const [members, setMembers] = useState<any[]>([]);
+    const [refreshMembersTrigger, setRefreshMembersTrigger] = useState(0);
+    const [membersCollapsed, setMembersCollapsed] = useState(false);
 
     const columns = [
         {
@@ -25,8 +27,7 @@ const TeamBoards = () => {
             key: 'actions',
             render: (_, record) => (
                 <Space>
-                    <Button type="link" danger>View</Button>
-                    <Button type="link">Remove</Button>
+                    <Button type="link" danger>Remove</Button>
                 </Space>
             )
         }
@@ -53,13 +54,22 @@ const TeamBoards = () => {
     };
 
     const handleShowMembers = async () => {
+        await fetchMembers();
         setMembersVisible(true);
     };
 
     useEffect(() => {
+        if (!teamId) return;
+
         fetchTeam();
         fetchMembers();
     }, [teamId]);
+
+    const handleInvitationSent = () => {
+        // Trigger refresh of the members list
+        setRefreshMembersTrigger(prev => prev + 1);
+        fetchMembers();
+    };
 
     if (loading) {
         return <Spin size="large" />;
@@ -70,6 +80,27 @@ const TeamBoards = () => {
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
                 <Title level={2}>{team.name}</Title>
                 <div>
+                    <Button
+                        style={{ marginRight: 10 }}
+                        onClick={handleShowMembers}
+                    >
+                        My Team
+                    </Button>
+
+                    <DynamicForm
+                        formTitle="Invite user to team"
+                        schemaName="InvitationCreate"
+                        apiUrl="invitation"
+                        type='post'
+                        neededData={{ teamId }}
+                        onSuccess={handleInvitationSent}
+                        trigger={
+                            <Button style={{ marginRight: 10 }}>
+                                Invite Member
+                            </Button>
+                        }
+                    />
+
                     <DynamicForm
                         formTitle="Edit team"
                         schemaName="TeamUpdate"
@@ -83,6 +114,7 @@ const TeamBoards = () => {
                         }
                         currentData={team}
                     />
+
                     <DynamicForm
                         formTitle="Create board"
                         schemaName="BoardCreate"
@@ -117,14 +149,6 @@ const TeamBoards = () => {
                 locale={{ emptyText: "No boards found. Create a new board to get started." }}
             />
 
-            <Button
-                type="primary"
-                style={{ marginTop: 16 }}
-                onClick={handleShowMembers}
-            >
-                My Team
-            </Button>
-
             <Modal
                 title="Team Members"
                 open={membersVisible}
@@ -138,6 +162,7 @@ const TeamBoards = () => {
                     pagination={false}
                 />
             </Modal>
+
         </div>
     );
 };

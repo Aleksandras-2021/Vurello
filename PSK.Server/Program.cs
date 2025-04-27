@@ -7,6 +7,7 @@ using PSK.Server.Data;
 using PSK.Server.Data.Entities;
 using PSK.Server.Misc;
 using System.Text;
+using PSK.Server.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -53,6 +54,7 @@ builder.Services.AddScoped<IUserContext, UserContext>();
 builder.Services.AddScoped<IBoardService, BoardService>();
 builder.Services.AddScoped<ITeamService, TeamService>();
 builder.Services.AddScoped<IJobService, JobService>();
+builder.Services.AddScoped<IInvitationService, InvitationService>();
 
 builder.Services.AddIdentity<User, IdentityRole>(options =>
 {

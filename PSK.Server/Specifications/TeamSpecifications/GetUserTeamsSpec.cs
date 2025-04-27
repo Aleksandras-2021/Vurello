@@ -1,12 +1,15 @@
 ﻿using Ardalis.Specification;
 using PSK.Server.Data.Entities;
 
-public class GetUserTeamsSpec : Specification<Team>
+namespace PSK.Server.Specifications.TeamSpecifications
 {
-    public GetUserTeamsSpec(Guid userId)
+    public class GetUserTeamsSpec : Specification<Team>
     {
-        Query
-            .Where(t => t.Users.Any(u => u.Id == userId.ToString()))
-            .Include(t => t.Boards);
+        public GetUserTeamsSpec(Guid userId)
+        {
+          Query
+              .Where(t => t.Users.Any(u => u.Id == userId.ToString()))
+              .Include(t => t.Boards);
+        }
     }
 }

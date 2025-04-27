@@ -7,11 +7,10 @@ export const api = axios.create({
 let refreshTokenFn: (() => Promise<string | null>) | null = null;
 
 export const setRefreshTokenFn = (fn: () => Promise<string | null>) => {
-  refreshTokenFn = fn;
+    refreshTokenFn = fn;
 };
 
 let refreshPromise: Promise<string | null> | null = null;
-
 
 api.interceptors.request.use(async (config) => {
     if (refreshTokenFn) {
@@ -42,7 +41,39 @@ api.interceptors.request.use(async (config) => {
     if (token) {
         config.headers!['Authorization'] = `Bearer ${token}`;
     }
-    
+
 
     return config;
 });
+
+export const getUserTeams = async () => {
+    const response = await api.get('team');
+    return response.data;
+};
+
+export const getTeamMembers = async (teamId: string) => {
+    const response = await api.get(`team/${teamId}/members`);
+    return response.data;
+}
+
+export const inviteUserToTeam = async (teamId: string, username: string) => {
+    const response = await api.post('invitation', {
+        recipientUsername: username,
+        teamId
+    });
+    return response.data;
+};
+
+export const getUserInvitations = async () => {
+    const response = await api.get('invitation/inbox');
+    return response.data;
+};
+
+export const respondToInvitation = async (invitationId: string, accept: boolean) => {
+    const response = await api.post(`invitation/${invitationId}/respond`, accept, {
+        headers: {
+            'Content-Type': 'application/json'
+        }
+    });
+    return response.data;
+};

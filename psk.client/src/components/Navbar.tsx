@@ -2,6 +2,7 @@ import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Layout, Button, Typography } from 'antd';
 import { useAuth } from './AuthContext';
+import UserInbox from "./UserInbox";
 
 
 const Navbar: React.FC = () => {
@@ -35,7 +36,12 @@ const Navbar: React.FC = () => {
             >
                 <Typography.Title level={4} style={{ margin: 0 }}>pvd</Typography.Title>
                 <div>
-                    {token && <Button type="text" onClick={handleLogout}>Logout</Button>}
+                    {token && (
+                        <>
+                            <UserInbox/>
+                            <Button type="text" onClick={handleLogout}>Logout</Button>
+                        </>
+                    )}
                 </div>
             </Layout.Header>
 

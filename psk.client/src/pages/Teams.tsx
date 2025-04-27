@@ -25,14 +25,22 @@ const Teams = () => {
 
     useEffect(() => {
         fetchTeams();
+        
+        const handleTeamInvitationAccepted = () => {
+            fetchTeams();
+        };
+        
+        window.addEventListener('team-invitation-accepted', handleTeamInvitationAccepted);
+        return () => {
+            window.removeEventListener('team-invitation-accepted', handleTeamInvitationAccepted);
+        }
     }, []);
 
     if (loading) {
         return <Spin size="large" />;
-    };
+    }
 
     return (
-
         <div style={{ padding: 24 }}>
             <DynamicForm
                 formTitle="Create new team"
