@@ -7,6 +7,7 @@ import { Modal } from 'antd';
 import { ButtonProps } from 'antd';
 import { api } from './API';
 import UuidDropdownWidget from './UuidDropdownWidget';
+import RichTextWidget from './RichTextWidget';
 
 
 interface DynamicFormProps {
@@ -39,7 +40,8 @@ const DynamicForm: React.FC<DynamicFormProps> = ({
     const [uiSchema, setUiSchema] = useState<any>({});
     const [formData, setFormData] = useState<Record<string, any>>({});
     const widgets = {
-        uuidDropdown: UuidDropdownWidget
+        uuidDropdown: UuidDropdownWidget,
+        richText: RichTextWidget,
     };
 
     useEffect(() => {
@@ -101,6 +103,9 @@ const DynamicForm: React.FC<DynamicFormProps> = ({
                             uiField["ui:widget"] = "uuidDropdown";
                         }
 
+                        if (value["x-richText"] === "true") {
+                            uiField["ui:widget"] = "richText";
+                        }
                         newUiSchema[key] = uiField;
                     });
                 }
@@ -141,7 +146,6 @@ const DynamicForm: React.FC<DynamicFormProps> = ({
             } else {
                 payload = submittedData;
             }
-
             const fullData = {
                 ...payload,
                 ...neededData,

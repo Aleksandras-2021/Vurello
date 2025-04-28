@@ -7,6 +7,7 @@ namespace PSK.Server.Data.Entities
         public string Name { get; set; }
 
         [Metadata("prompt", "Job description")]
+        [Metadata("richText", "true")]
         public string Description { get; set; }
 
         [Metadata("prompt", "Job status")]
