@@ -52,7 +52,7 @@ namespace PSK.Server.Controllers
 
             if (user == null || !await _userManager.CheckPasswordAsync(user, model.Password))
             {
-                return Unauthorized(new { message = "Failed" });
+                return Unauthorized(new { message = "Incorrect login information" });
             }
 
             var token = GenerateJwtToken(user);
@@ -95,7 +95,7 @@ namespace PSK.Server.Controllers
                     return Ok(new { Token = newToken });
                 }
 
-                return Ok(new { Token = token});
+                return Ok(new { Token = token });
             }
             catch (Exception ex)
             {

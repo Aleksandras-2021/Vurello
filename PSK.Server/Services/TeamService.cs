@@ -1,10 +1,6 @@
-﻿using Ardalis.Specification;
-using Mapster;
-using Microsoft.AspNetCore.Identity;
+﻿using Microsoft.AspNetCore.Identity;
 using PSK.Server.Data.Entities;
 using PSK.Server.Misc;
-using PSK.Server.Specifications.TeamSpecifications;
-using System.Security.Claims;
 
 public interface ITeamService : IGenericService<Team, TeamCreate, TeamUpdate>
 {
@@ -28,17 +24,25 @@ public class TeamService : GenericService<Team, TeamCreate, TeamUpdate>, ITeamSe
         var user = await _userManager.FindByIdAsync(create.UserId);
 
         AddUserToTeam(entity, user);
-
     }
 
     public void AddUserToTeam(Team team, User user)
     {
-        if (user == null || team == null || team.Users.Any(u => u.Id == user.Id))
+        if (team == null)
         {
-            return;
+            throw new ArgumentNullException(nameof(team), "Team must not be null.");
+        }
+
+        if (user == null)
+        {
+            throw new ArgumentNullException(nameof(user), "User must not be null.");
+        }
+
+        if (team.Users.Any(u => u.Id == user.Id))
+        {
+            throw new InvalidOperationException($"User with ID {user.Id} is already a member of the team.");
         }
 
         team.Users.Add(user);
     }
-
 }

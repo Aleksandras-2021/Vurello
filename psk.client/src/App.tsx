@@ -7,12 +7,13 @@ import Auth from './pages/Auth';
 import { AuthProvider } from './components/AuthContext';
 import PrivateRoute from './components/PrivateRoute';
 import Navbar from './components/Navbar';
+import { ToastContainer } from 'react-toastify';
 
 const App = () => {
     return (
         <AuthProvider>
             <Router>
-                <Navbar/>
+                <Navbar />
                 <Routes>
                     <Route path="/auth" element={<Auth />} />
 
@@ -25,12 +26,13 @@ const App = () => {
                                     <Route path="/teams" element={<Teams />} />
                                     <Route path="/teams/:teamId" element={<TeamBoards />} />
                                     <Route path="/boards/:boardId" element={<BoardDetail />} />
-
                                 </Routes>
                             </PrivateRoute>
                         }
                     />
                 </Routes>
+                <ToastContainer position="top-right" autoClose={5000} />
+
             </Router>
         </AuthProvider>
     );

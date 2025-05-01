@@ -8,6 +8,7 @@ using PSK.Server.Data.Entities;
 using PSK.Server.Misc;
 using System.Text;
 using PSK.Server.Services;
+using PSK.Server.Middlewares;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -107,7 +108,7 @@ builder.Services.AddCors(options =>
 TypeAdapterConfig.GlobalSettings.Default.IgnoreNullValues(true);
 
 var app = builder.Build();
-
+app.UseMiddleware<ExceptionHandlingMiddleware>();
 app.UseDefaultFiles();
 app.MapStaticAssets();
 
@@ -131,4 +132,4 @@ app.UseSwaggerUI();
 
 app.MapFallbackToFile("/index.html");
 
-app.Run();
+await app.RunAsync();

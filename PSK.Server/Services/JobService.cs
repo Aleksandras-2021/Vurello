@@ -1,6 +1,4 @@
 ﻿using PSK.Server.Data.Entities;
-using System.Security.Claims;
-
 public interface IJobService : IGenericService<Job, JobCreate, JobUpdate>
 {
 }
@@ -19,6 +17,5 @@ public class JobService : GenericService<Job, JobCreate, JobUpdate>, IJobService
     {
         entity.Status = create.Status ?? "To Do";
         await Task.CompletedTask;
-
     }
 }

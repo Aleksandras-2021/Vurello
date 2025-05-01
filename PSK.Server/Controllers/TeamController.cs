@@ -1,12 +1,8 @@
 ﻿using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using PSK.Server.Data.Entities;
 using PSK.Server.Misc;
 using PSK.Server.Specifications.TeamSpecifications;
-using PSK.Server.Specifications.InvitationSpecifications;
-using System.Security.Claims;
-
 
 namespace PSK.Controllers
 {

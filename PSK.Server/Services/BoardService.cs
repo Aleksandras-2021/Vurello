@@ -1,6 +1,4 @@
-﻿using Ardalis.Specification;
-using Mapster;
-using PSK.Server.Data.Entities;
+﻿using PSK.Server.Data.Entities;
 
 public interface IBoardService : IGenericService<Board, BoardCreate, BoardUpdate>
 {
@@ -13,6 +11,4 @@ public class BoardService : GenericService<Board, BoardCreate, BoardUpdate>, IBo
     public BoardService(GenericRepository<Board> repository) : base(repository)
     {
     }
-
-  
 }

@@ -1,4 +1,6 @@
 import axios from 'axios';
+import { toast } from 'react-toastify';
+
 
 export const api = axios.create({
     baseURL: 'https://localhost:7285/api/',
@@ -18,7 +20,7 @@ api.interceptors.request.use(async (config) => {
         const tokenExpiration = exp ? parseInt(exp, 10) : null;
         const now = Date.now() / 1000;
 
-        if (tokenExpiration && tokenExpiration - now < 60 * 60){
+        if (tokenExpiration && tokenExpiration - now < 60 * 60) {
             if (!refreshPromise) {
                 refreshPromise = refreshTokenFn()
                     .catch(err => {
@@ -45,6 +47,27 @@ api.interceptors.request.use(async (config) => {
 
     return config;
 });
+
+api.interceptors.response.use(
+    response => response,
+    error => {
+        const response = error.response;
+
+        if (response?.data && typeof response.data === 'object') {
+            const { title, detail, message } = response.data;
+            const status = response.status;
+
+            const errorMessage =
+                title || detail || message || `An error occurred (status ${status || 'unknown'})`;
+
+            toast.error(errorMessage);
+        } else {
+            toast.error(error.message || 'An unexpected error occurred.');
+        }
+
+        return Promise.reject(error);
+    }
+);
 
 export const getUserTeams = async () => {
     const response = await api.get('team');
