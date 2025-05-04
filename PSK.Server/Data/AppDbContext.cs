@@ -25,7 +25,16 @@ namespace PSK.Server.Data
             modelBuilder.Entity<Team>()
                 .HasMany(t => t.Users)
                 .WithMany(u => u.Teams);
+            
+            modelBuilder.Entity<User>()
+                .HasMany(u => u.CreatedTeams)
+                .WithOne(t => t.Creator)
+                .HasForeignKey(t => t.CreatorId)
+                .OnDelete(DeleteBehavior.Restrict);
 
+            modelBuilder.Entity<Team>()
+                .HasMany(t => t.Users)
+                .WithMany(u => u.Teams);
 
             modelBuilder.Entity<Board>()
                 .HasKey(b => b.Id);

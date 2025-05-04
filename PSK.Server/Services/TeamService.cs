@@ -1,6 +1,8 @@
-﻿using Microsoft.AspNetCore.Identity;
+﻿using System.Security.Claims;
+using Microsoft.AspNetCore.Identity;
 using PSK.Server.Data.Entities;
 using PSK.Server.Misc;
+using PSK.Server.Specifications.TeamSpecifications;
 
 public interface ITeamService : IGenericService<Team, TeamCreate, TeamUpdate>
 {
@@ -22,10 +24,22 @@ public class TeamService : GenericService<Team, TeamCreate, TeamUpdate>, ITeamSe
     public override async Task OnCreatingAsync(Team entity, TeamCreate create)
     {
         var user = await _userManager.FindByIdAsync(create.UserId);
-
+        entity.CreatorId = create.UserId;
         AddUserToTeam(entity, user);
     }
 
+    public override async Task<bool> AuthorizeAsync(Guid id, ClaimsPrincipal user)
+    {
+        var userId = _userContext.GetUserId(user).ToString();
+        var team = await _repository.SingleOrDefaultAsync(
+            new GetTeamForAuthorizationSpec(id));
+        if (team == null)
+        {
+            throw new KeyNotFoundException("Team wiht ID {id} not found.");
+        }
+        return team.CreatorId == userId;
+    }
+    
     public void AddUserToTeam(Team team, User user)
     {
         if (team == null)

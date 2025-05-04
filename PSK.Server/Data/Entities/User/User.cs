@@ -9,6 +9,9 @@ namespace PSK.Server.Data.Entities
         public ICollection<Team> Teams { get; set; } = new List<Team>();
 
         [JsonIgnore]
+        public ICollection<Team> CreatedTeams { get; set; } = new List<Team>();
+        
+        [JsonIgnore]
         public ICollection<Job> AssignedJobs { get; set; } = new List<Job>();
     }
 }

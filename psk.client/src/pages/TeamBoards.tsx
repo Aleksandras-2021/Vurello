@@ -1,20 +1,24 @@
 import React, { useState, useEffect } from 'react';
-import {Link, useParams } from 'react-router-dom';
+import { Link, useParams, useNavigate } from 'react-router-dom';
 import DynamicForm from '../components/DynamicForm';
-import { Button, Spin, Modal, Table, Space, Typography, Card, Divider, Layout, Collapse, List } from 'antd';
-import { ArrowLeftOutlined, PlusOutlined, UserOutlined } from '@ant-design/icons';
+import { Button, Spin, Modal, Table, Space, Typography, Card, Divider, Layout, Collapse, List, Popconfirm } from 'antd';
+import { ArrowLeftOutlined, PlusOutlined, UserOutlined, DeleteOutlined } from '@ant-design/icons';
 import { api } from '../components/API';
+import { toast } from 'react-toastify';
+import { useAuth } from '../components/AuthContext';
 
 const { Title } = Typography;
 
 const TeamBoards = () => {
     const { teamId } = useParams();
+    const navigate = useNavigate();
+    const { userId } = useAuth();
     const [team, setTeam] = useState<any>(null);
     const [loading, setLoading] = useState(true);
     const [membersVisible, setMembersVisible] = useState(false);
     const [members, setMembers] = useState<any[]>([]);
     const [refreshMembersTrigger, setRefreshMembersTrigger] = useState(0);
-    const [membersCollapsed, setMembersCollapsed] = useState(false);
+    const [isCreator, setIsCreator] = useState(false);
 
     const columns = [
         {
@@ -46,6 +50,12 @@ const TeamBoards = () => {
         try {
             const response = await api.get(`team/${teamId}`);
             setTeam(response.data);
+
+            // Check if the current user is the team creator
+            setIsCreator(response.data.creatorId === userId);
+            console.log("Team creator ID:", response.data.creatorId);
+            console.log("Current user ID:", userId);
+            console.log("Is creator:", response.data.creatorId === userId);
         } catch (error) {
             console.error('Failed to fetch team:', error);
         } finally {
@@ -58,15 +68,24 @@ const TeamBoards = () => {
         setMembersVisible(true);
     };
 
+    const handleDeleteTeam = async () => {
+        try {
+            await api.delete(`team/${teamId}`);
+            toast.success('Team deleted successfully');
+            navigate('/teams');
+        } catch (error) {
+            console.error('Failed to delete team:', error);
+        }
+    };
+
     useEffect(() => {
         if (!teamId) return;
 
         fetchTeam();
         fetchMembers();
-    }, [teamId]);
+    }, [teamId, userId]);
 
     const handleInvitationSent = () => {
-        // Trigger refresh of the members list
         setRefreshMembersTrigger(prev => prev + 1);
         fetchMembers();
     };
@@ -78,7 +97,14 @@ const TeamBoards = () => {
     return (
         <div style={{ padding: 24 }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
-                <Title level={2}>{team.name}</Title>
+                <div style={{ display: 'flex', alignItems: 'center' }}>
+                    <Link to="/teams">
+                        <Button type="text" icon={<ArrowLeftOutlined />} style={{ marginRight: 10 }}>
+                            Back
+                        </Button>
+                    </Link>
+                    <Title level={2} style={{ margin: 0 }}>{team.name}</Title>
+                </div>
                 <div>
                     <Button
                         style={{ marginRight: 10 }}
@@ -114,6 +140,26 @@ const TeamBoards = () => {
                         }
                         currentData={team}
                     />
+
+                    {isCreator && (
+                        <Popconfirm
+                            title="Delete Team"
+                            description="Are you sure you want to delete this team? This action cannot be undone."
+                            onConfirm={handleDeleteTeam}
+                            okText="Yes, Delete"
+                            cancelText="Cancel"
+                            okButtonProps={{ danger: true }}
+                        >
+                            <Button
+                                danger
+                                icon={<DeleteOutlined />}
+                                style={{ marginRight: 10 }}
+                                type={"primary"}
+                            >
+                                Delete Team
+                            </Button>
+                        </Popconfirm>
+                    )}
 
                     <DynamicForm
                         formTitle="Create board"
@@ -162,7 +208,6 @@ const TeamBoards = () => {
                     pagination={false}
                 />
             </Modal>
-
         </div>
     );
 };
