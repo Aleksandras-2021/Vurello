@@ -30,12 +30,15 @@ const UserInbox: React.FC = () => {
 
     const handleRespondToInvitation = async (invitationId: string, accept: boolean) => {
         try {
-            await api.post(`invitation/${invitationId}/respond`, accept, {
-                headers: {
-                    'Content-Type': 'application/json'
-                }
+            const responseBody = accept
+                ? { isAccepted: true }
+                : { isRejected: true };
+
+            await api.patch(`/invitation/${invitationId}`, responseBody, {
+                headers: { 'Content-Type': 'application/json' }
             });
-            message.success(`Invitation ${accept ? 'accepted' : 'rejected'}`);
+
+            message.success(`Invitation ${accept ? 'accepted' : 'declined'}`);
             fetchInvitations();
 
             if (accept) {

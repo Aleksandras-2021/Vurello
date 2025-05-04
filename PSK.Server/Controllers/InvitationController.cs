@@ -38,48 +38,10 @@ public class InvitationController : GenericController<Invitation, InvitationCrea
     [HttpGet("inbox")]
     public async Task<IActionResult> GetInvitations()
     {
-        var userId = _userContext.GetUserId(User).ToString();
+        var userId = _userContext.GetUserId(User);
         var spec = new GetUserInvitationsSpec(userId);
         var invitations = await _invitationService.GetAllAsync(spec);
         return Ok(invitations);
     }
 
-    [HttpPost("{id}/respond")]
-    public async Task<IActionResult> RespondToInvitation(Guid id, [FromBody] bool accept)
-    {
-        var userId = _userContext.GetUserId(User);
-
-        var invitation = await _invitationService.GetSingleAsync(new GetInvitationByIdSpec(id));
-
-        if (invitation == null || invitation.RecipientUserId != userId)
-            return BadRequest();
-
-        if (accept)
-        {
-            var team = await _teamRepository.GetByIdAsync(invitation.TeamId);
-            if (team == null)
-                return BadRequest();
-
-            var user = await _userManager.FindByIdAsync(userId.ToString());
-            if (user == null)
-                return BadRequest();
-
-            _teamService.AddUserToTeam(team, user);
-            await _teamRepository.UpdateAsync(team);
-
-            invitation.IsAccepted = true;
-        }
-        else
-        {
-            invitation.IsRejected = true;
-        }
-
-        await _invitationService.UpdateAsync(invitation.Id, new InvitationUpdate
-        {
-            IsAccepted = invitation.IsAccepted,
-            IsRejected = invitation.IsRejected
-        });
-
-        return NoContent();
-    }
 }

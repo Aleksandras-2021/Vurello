@@ -40,10 +40,9 @@ namespace PSK.Controllers
         [HttpGet("{id}/members")]
         public async Task<IActionResult> GetTeamMembers(Guid id)
         {
-            var team = await _teamService.GetSingleAsync(new GetTeamByIdSpec(id));
-            var members = team.Users.Select(u => new { u.Id, u.UserName }).ToList();
+            var teamMembers = await _teamService.GetAllAsync(new GetTeamMembersByIdSpec(id));
 
-            return Ok(members);
+            return Ok(teamMembers);
         }
     }
 }

@@ -1,5 +1,6 @@
 ﻿using Ardalis.Specification;
 using Mapster;
+using Microsoft.AspNetCore.Http.HttpResults;
 using System.Security.Claims;
 
 public interface IGenericService<TEntity, TCreate, TUpdate>
@@ -9,6 +10,8 @@ public interface IGenericService<TEntity, TCreate, TUpdate>
 {
     Task<List<TEntity>> GetAllAsync(ISpecification<TEntity> spec);
     Task<TEntity> GetSingleAsync(ISingleResultSpecification<TEntity> spec);
+    Task<List<TResult>> GetAllAsync<TResult>(ISpecification<TEntity, TResult> spec);
+    Task<TResult> GetSingleAsync<TResult>(ISingleResultSpecification<TEntity, TResult> spec);
     Task<TEntity> CreateAsync(TCreate create);
     Task<TEntity> UpdateAsync(Guid id, TUpdate update);
     Task DeleteAsync(Guid id);
@@ -16,6 +19,8 @@ public interface IGenericService<TEntity, TCreate, TUpdate>
     Task<bool> AuthorizeAsync(TCreate create, ClaimsPrincipal user);
     Task<bool> AuthorizeAsync(TUpdate update, Guid id, ClaimsPrincipal user);
     Task OnCreatingAsync(TEntity entity, TCreate create);
+    Task OnUpdatingAsync(TEntity entity, TUpdate update);
+
 }
 
 public class GenericService<TEntity, TCreate, TUpdate> : IGenericService<TEntity, TCreate, TUpdate>
@@ -43,6 +48,17 @@ public class GenericService<TEntity, TCreate, TUpdate> : IGenericService<TEntity
 
         return entity;
     }
+    public async Task<List<TResult>> GetAllAsync<TResult>(ISpecification<TEntity, TResult> spec)
+    {
+        var entities = await _repository.ListAsync(spec);
+        return entities;
+    }
+
+    public async Task<TResult> GetSingleAsync<TResult>(ISingleResultSpecification<TEntity, TResult> spec)
+    {
+        var entity = await _repository.SingleOrDefaultAsync(spec);
+        return entity;
+    }
 
     public async Task<TEntity> CreateAsync(TCreate create)
     {
@@ -61,6 +77,7 @@ public class GenericService<TEntity, TCreate, TUpdate> : IGenericService<TEntity
         }
 
         update.Adapt(entity);
+        await OnUpdatingAsync(entity, update);
 
         await _repository.UpdateAsync(entity);
 
@@ -101,6 +118,10 @@ public class GenericService<TEntity, TCreate, TUpdate> : IGenericService<TEntity
         return true;
     }
     public virtual async Task OnCreatingAsync(TEntity entity, TCreate create)
+    {
+        await Task.CompletedTask;
+    }
+    public virtual async Task OnUpdatingAsync(TEntity entity, TUpdate update)
     {
         await Task.CompletedTask;
     }

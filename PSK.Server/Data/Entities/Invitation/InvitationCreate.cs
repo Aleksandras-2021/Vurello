@@ -6,6 +6,7 @@ namespace PSK.Server.Data.Entities
     public class InvitationCreate
     {
         [Metadata("prompt", "Username to invite")]
+        [Required]
         [MinLength(3)]
         [MaxLength(30)]
         public string RecipientUsername { get; set; } = string.Empty;

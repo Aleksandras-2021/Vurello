@@ -12,7 +12,7 @@ namespace PSK.Server.Data.Entities
 
         [Metadata("prompt", "Job description")]
         [Metadata("richText", "true")]
-        public string Description { get; set; }
+        public string? Description { get; set; }
 
         [Metadata("prompt", "Job status")]
         [Metadata("enum", "To Do,In Progress,Done")]
