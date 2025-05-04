@@ -40,7 +40,7 @@ public class TeamService : GenericService<Team, TeamCreate, TeamUpdate>, ITeamSe
         }
         return team.CreatorId.ToString() == userId;
     }
-    
+
     public void AddUserToTeam(Team team, User user)
     {
         if (team == null)
@@ -69,7 +69,7 @@ public class TeamService : GenericService<Team, TeamCreate, TeamUpdate>, ITeamSe
             throw new KeyNotFoundException($"Team with ID {teamId} not found.");
         }
 
-        if (team.CreatorId == userId.ToString())
+        if (team.CreatorId == userId)
         {
             throw new InvalidOperationException("Cannot remove creator from team.");
         }
@@ -79,13 +79,13 @@ public class TeamService : GenericService<Team, TeamCreate, TeamUpdate>, ITeamSe
         {
             throw new KeyNotFoundException($"User with ID {userId} not found.");
         }
-        
-        var userInTeam = team.Users.FirstOrDefault(u => u.Id == userId.ToString());
+
+        var userInTeam = team.Users.FirstOrDefault(u => u.Id == userId);
         if (userInTeam == null)
         {
             throw new InvalidOperationException($"User with ID {userId} is not a member of the team.");
         }
-        
+
         team.Users.Remove(userInTeam);
         await _teamRepository.UpdateAsync(team);
     }

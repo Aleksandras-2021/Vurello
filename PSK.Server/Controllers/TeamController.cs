@@ -50,13 +50,13 @@ namespace PSK.Controllers
         public async Task<IActionResult> RemoveMember(Guid teamId, Guid userId)
         {
             var team = await _teamService.GetSingleAsync(new GetTeamByIdSpec(teamId));
-            var currentUserId = _userContext.GetUserId(User).ToString();
+            var currentUserId = _userContext.GetUserId(User);
             if (team.CreatorId != currentUserId)
             {
                 return Forbid("Only the team creator can remove members.");
             }
 
-            if (userId.ToString() == team.CreatorId)
+            if (userId == team.CreatorId)
             {
                 return BadRequest("Cannot remove creator from team.");
             }
@@ -72,7 +72,7 @@ namespace PSK.Controllers
             }
             catch (InvalidOperationException e)
             {
-               return BadRequest(e.Message); 
+                return BadRequest(e.Message);
             }
         }
     }
