@@ -6,6 +6,9 @@ import { ArrowLeftOutlined, PlusOutlined, UserOutlined, DeleteOutlined } from '@
 import { api } from '../components/API';
 import { toast } from 'react-toastify';
 import { useAuth } from '../components/AuthContext';
+import { useAppContext } from '../components/AppContext';
+import AppLayout from '../components/AppLayout';
+import { EditOutlined } from '@ant-design/icons';
 
 const { Title } = Typography;
 
@@ -16,9 +19,10 @@ const TeamBoards = () => {
     const [team, setTeam] = useState<any>(null);
     const [loading, setLoading] = useState(true);
     const [membersVisible, setMembersVisible] = useState(false);
-    const [members, setMembers] = useState<any[]>([]);
+    const [members, setMembers] = useState<any[]>([]); 
     const [refreshMembersTrigger, setRefreshMembersTrigger] = useState(0);
     const [isCreator, setIsCreator] = useState(false);
+    const { setLastBoardId } = useAppContext();
 
     const fetchMembers = async () => {
         try {
@@ -76,6 +80,7 @@ const TeamBoards = () => {
 
         fetchTeam();
         fetchMembers();
+
     }, [teamId, userId]);
 
     const handleInvitationSent = () => {
@@ -115,7 +120,7 @@ const TeamBoards = () => {
     ];
 
     return (
-        <div style={{ padding: 24 }}>
+        <AppLayout>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
                 <div style={{ display: 'flex', alignItems: 'center' }}>
                     <Link to="/teams">
@@ -123,7 +128,7 @@ const TeamBoards = () => {
                             Back
                         </Button>
                     </Link>
-                    <Title level={2} style={{ margin: 0 }}>{team.name}</Title>
+                    <Title level={2} style={{ margin: 0 }}>{team.name} Boards</Title>
                 </div>
                 <div>
                     <Button
@@ -198,19 +203,54 @@ const TeamBoards = () => {
             </div>
 
             <List
-                grid={{ gutter: 16, column: 3 }}
+                grid={{ gutter: 16, column: 5 }}
                 dataSource={team.boards || []}
                 renderItem={(board: any) => (
                     <List.Item>
-                        <Link to={`/boards/${board.id}`} style={{ display: 'block' }}>
-                            <Card
-                                hoverable
-                                title={board.name}
+                        <div style={{ position: 'relative' }}>
+                            <Link
+                                to={`/boards/${board.id}`}
+                                onClick={() => setLastBoardId(board.id)}
+                                style={{ display: 'block' }}
                             >
-                                <p>Click to view tasks</p>
-                            </Card>
-                        </Link>
+                                <Card hoverable style={{ cursor: 'pointer' }}>
+                                    <p style={{
+                                        fontSize: '18px',
+                                        fontWeight: 'bold',
+                                        marginBottom: '12px' // Increased space below title
+                                    }}>
+                                        {board.name}
+                                    </p>
+                                    <p style={{ marginTop: '8px' }}> {/* Added space above this line */}
+                                        Click anywhere to view tasks
+                                    </p>
+                                </Card>
+                            </Link>
+                            <div style={{ position: 'absolute', top: 16, right: 16, zIndex: 1 }}>
+                                <DynamicForm
+                                    formTitle={`Edit Board: ${board.name}`}
+                                    schemaName="BoardUpdate"
+                                    apiUrl={`board/${board.id}`}
+                                    type="patch"
+                                    onSuccess={fetchTeam}
+                                    trigger={
+                                        <Button
+                                            icon={<EditOutlined />}
+                                            size="small"
+                                            type="text"
+                                            onClick={(e) => e.preventDefault()}
+                                        />
+                                    }
+                                    currentData={board}
+                                />
+                            </div>
+                        </div>
                     </List.Item>
+
+
+
+
+
                 )}
                 locale={{ emptyText: "No boards found. Create a new board to get started." }}
             />
@@ -228,7 +268,7 @@ const TeamBoards = () => {
                     pagination={false}
                 />
             </Modal>
-        </div>
+        </AppLayout>
     );
 };
 

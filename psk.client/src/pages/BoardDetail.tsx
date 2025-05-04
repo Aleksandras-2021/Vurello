@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { Card, Typography, Spin, Button, List, Row, Col, Tag } from 'antd'; import { PlusOutlined, ArrowLeftOutlined } from '@ant-design/icons';
+import { Card, Typography, Spin, Button, List, Row, Col, Tag } from 'antd';
+import { PlusOutlined, ArrowLeftOutlined } from '@ant-design/icons';
 import DynamicForm from '../components/DynamicForm';
 import { api } from "../components/API";
 import { EditOutlined } from '@ant-design/icons';
+import AppLayout from '../components/AppLayout';
 
 const { Title, Text } = Typography;
 
@@ -66,19 +68,17 @@ const BoardDetail = () => {
     }
 
     return (
-        <div style={{ padding: 24 }}>
-            <Row align="middle" style={{ marginBottom: 20 }}>
-                <Col>
+        <AppLayout>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+                <div style={{ display: 'flex', alignItems: 'center' }}>
                     <Link to={`/teams/${board?.teamId}`}>
-                        <Button type="text" icon={<ArrowLeftOutlined />}>
-                            Back to Team
+                        <Button type="text" icon={<ArrowLeftOutlined />} style={{ marginRight: 10 }}>
+                            Back
                         </Button>
                     </Link>
-                </Col>
-                <Col flex="auto">
-                    <Title level={2}>{board?.name}</Title>
-                </Col>
-                <Col>
+                    <Title level={2} style={{ margin: 0 }}>{board?.name}</Title>
+                </div>
+                <div>
                     <DynamicForm
                         formTitle="Create Task"
                         schemaName="JobCreate"
@@ -93,59 +93,64 @@ const BoardDetail = () => {
                         neededData={{ boardId }}
                         dropdownOptions={teamMembers}
                     />
-                </Col>
+                </div>
+            </div>
+            <Row gutter={16}>
+                {['to do', 'in progress', 'done'].map((status) => (
+                    <Col span={8} key={status}>
+                        <Card title={status.toUpperCase()} bordered>
+                            {jobs.filter(job => job.status.toLowerCase() === status).length === 0 ? (
+                                <Text type="secondary">No tasks</Text>
+                            ) : (
+                                jobs
+                                    .filter(job => job.status.toLowerCase() === status)
+                                    .map((job) => (
+                                        <Card
+                                            key={job.id}
+                                            style={{ marginBottom: 16 }}
+                                            title={job.name}
+                                            extra={
+                                                <Row gutter={8}>
+                                                    <Col>
+                                                        <Tag color={getStatusColor(job.status)}>{job.status}</Tag>
+                                                    </Col>
+                                                    <Col>
+                                                        <DynamicForm
+                                                            formTitle={`Edit Task: ${job.name}`}
+                                                            schemaName="JobUpdate"
+                                                            apiUrl={`job/${job.id}`}
+                                                            type="patch"
+                                                            onSuccess={fetchBoardData}
+                                                            trigger={
+                                                                <Button
+                                                                    icon={<EditOutlined />}
+                                                                    size="small"
+                                                                    type="text"
+                                                                />
+                                                            }
+                                                            neededData={{ boardId }}
+                                                            currentData={job}
+                                                            dropdownOptions={teamMembers}
+                                                        />
+                                                    </Col>
+                                                </Row>
+                                            }
+                                        >
+                                            <p>{job.description}</p>
+                                            {job.assignedMemberId && (
+                                                <p>
+                                                    <strong>Assigned to:</strong>{' '}
+                                                    {teamMembers.find((member) => member.value === job.assignedMemberId)?.label || 'Unknown'}
+                                                </p>
+                                            )}
+                                        </Card>
+                                    ))
+                            )}
+                        </Card>
+                    </Col>
+                ))}
             </Row>
-
-            {jobs.length === 0 ? (
-                <Text>No tasks found. Create a new task to get started.</Text>
-            ) : (
-                <List
-                    grid={{ gutter: 16, column: 3 }}
-                    dataSource={jobs}
-                    renderItem={(job: any) => (
-                        <List.Item>
-                            <Card
-                                title={job.name}
-                                extra={
-                                    <Row gutter={8}>
-                                        <Col>
-                                            <Tag color={getStatusColor(job.status)}>{job.status}</Tag>
-                                        </Col>
-                                        <Col>
-                                            <DynamicForm
-                                                formTitle={`Edit Task: ${job.name}`}
-                                                schemaName="JobUpdate"
-                                                apiUrl={`job/${job.id}`}
-                                                type="patch"
-                                                onSuccess={fetchBoardData}
-                                                trigger={
-                                                    <Button
-                                                        icon={<EditOutlined />}
-                                                        size="small"
-                                                        type="text"
-                                                    />
-                                                }
-                                                neededData={{ boardId }}
-                                                currentData={job}
-                                                dropdownOptions={teamMembers}
-                                            />
-                                        </Col>
-                                    </Row>
-                                }
-                            >
-                                <p>{job.description}</p>
-                                <p>
-                                    <strong>Assigned to:</strong>{' '}
-                                    {job.assignedMemberId
-                                        ? teamMembers.find((member) => member.value === job.assignedMemberId)?.label || 'Unknown'
-                                        : 'Unassigned'}
-                                </p>
-                            </Card>
-                        </List.Item>
-                    )}
-                />
-            )}
-        </div>
+        </AppLayout>
     );
 };
 

@@ -8,32 +8,44 @@ import { AuthProvider } from './components/AuthContext';
 import PrivateRoute from './components/PrivateRoute';
 import Navbar from './components/Navbar';
 import { ToastContainer } from 'react-toastify';
+import { AppProvider } from './components/AppContext';
+import { Layout } from 'antd';
+
+const AppLayout = ({ children }: { children: React.ReactNode }) => (
+    <Layout style={{ minHeight: '100vh' }}>
+        <Navbar />
+        <Layout style={{ marginLeft: 80, marginTop: 64, padding: 24 }}>
+            {children}
+        </Layout>
+    </Layout>
+);
 
 const App = () => {
     return (
         <AuthProvider>
-            <Router>
-                <Navbar />
-                <Routes>
-                    <Route path="/auth" element={<Auth />} />
-
-                    <Route
-                        path="*"
-                        element={
-                            <PrivateRoute>
-                                <Routes>
-                                    <Route path="/" element={<Navigate to="/teams" replace />} />
-                                    <Route path="/teams" element={<Teams />} />
-                                    <Route path="/teams/:teamId" element={<TeamBoards />} />
-                                    <Route path="/boards/:boardId" element={<BoardDetail />} />
-                                </Routes>
-                            </PrivateRoute>
-                        }
-                    />
-                </Routes>
-                <ToastContainer position="top-right" autoClose={5000} />
-
-            </Router>
+            <AppProvider>
+                <Router>
+                    <Routes>
+                        <Route path="/auth" element={<Auth />} />
+                        <Route
+                            path="*"
+                            element={
+                                <PrivateRoute>
+                                    <AppLayout>
+                                        <Routes>
+                                            <Route path="/" element={<Navigate to="/teams" replace />} />
+                                            <Route path="/teams" element={<Teams />} />
+                                            <Route path="/teams/:teamId" element={<TeamBoards />} />
+                                            <Route path="/boards/:boardId" element={<BoardDetail />} />
+                                        </Routes>
+                                    </AppLayout>
+                                </PrivateRoute>
+                            }
+                        />
+                    </Routes>
+                    <ToastContainer position="top-right" autoClose={5000} />
+                </Router>
+            </AppProvider>
         </AuthProvider>
     );
 };
