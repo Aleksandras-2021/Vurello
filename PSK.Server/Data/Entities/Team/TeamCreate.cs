@@ -6,6 +6,9 @@ namespace PSK.Server.Data.Entities
     public class TeamCreate
     {
         [Metadata("prompt", "Team name")]
+        [Required]
+        [MinLength(3)]
+        [MaxLength(30)]
         public string Name { get; set; }
 
         [Metadata("ignore", "true")]

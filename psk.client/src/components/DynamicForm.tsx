@@ -1,14 +1,18 @@
 import React, { useEffect, useState, ReactElement, cloneElement } from 'react';
 import Form from '@rjsf/antd';
-import { RJSFSchema } from '@rjsf/utils';
+import { RJSFSchema, AjvError} from '@rjsf/utils';
 import validator from '@rjsf/validator-ajv8';
 import axios from 'axios';
-import { Modal } from 'antd';
+import { Modal} from 'antd';
 import { ButtonProps } from 'antd';
 import { api } from './API';
 import UuidDropdownWidget from './UuidDropdownWidget';
 import RichTextWidget from './RichTextWidget';
+import { ErrorListProps } from '@rjsf/utils';
 
+const CustomErrorList = (props: ErrorListProps) => {
+    return null;
+};
 
 interface DynamicFormProps {
     formTitle: string;
@@ -39,6 +43,7 @@ const DynamicForm: React.FC<DynamicFormProps> = ({
     const [isModalVisible, setIsModalVisible] = useState(false);
     const [uiSchema, setUiSchema] = useState<any>({});
     const [formData, setFormData] = useState<Record<string, any>>({});
+    const [errorMessageMap, setErrorMessageMap] = useState<Record<string, Record<string, string>>>({});
     const widgets = {
         uuidDropdown: UuidDropdownWidget,
         richText: RichTextWidget,
@@ -76,6 +81,8 @@ const DynamicForm: React.FC<DynamicFormProps> = ({
                     properties: {},
                 };
 
+                const newErrorMessageMap: Record<string, Record<string, string>> = {};
+
                 if (schema.properties) {
                     Object.entries(schema.properties).forEach(([key, value]: [string, any]) => {
                         if (value["x-ignore"] === "true") return;
@@ -83,6 +90,7 @@ const DynamicForm: React.FC<DynamicFormProps> = ({
                         filteredSchema.properties[key] = value;
 
                         const uiField: any = {};
+                        const fieldTitle = value["x-prompt"] || key;
 
                         if (value["x-prompt"]) {
                             uiField["ui:title"] = value["x-prompt"];
@@ -106,10 +114,21 @@ const DynamicForm: React.FC<DynamicFormProps> = ({
                         if (value["x-richText"] === "true") {
                             uiField["ui:widget"] = "richText";
                         }
+
+                        newErrorMessageMap[key] = {
+                            required: `${fieldTitle} is required`,
+                            minLength: `${fieldTitle} must have at least ${value.minLength || 0} characters`,
+                            maxLength: `${fieldTitle} cannot exceed ${value.maxLength || 0} characters`,
+                            format: `Please enter a valid ${fieldTitle.toLowerCase()}`,
+                            pattern: `${fieldTitle} has an invalid format`,
+                            enum: `Please select a valid option for ${fieldTitle.toLowerCase()}`
+                        };
+
                         newUiSchema[key] = uiField;
                     });
                 }
 
+                setErrorMessageMap(newErrorMessageMap);
                 setFormSchema(filteredSchema);
                 setUiSchema(newUiSchema);
 
@@ -131,6 +150,29 @@ const DynamicForm: React.FC<DynamicFormProps> = ({
             setFormData(filteredData);
         }
     }, [currentData, formSchema, type]);
+
+    const transformErrors = (errors: AjvError[]): AjvError[] => {
+        return errors.map(error => {
+            const pathSegments = error.property.split('.');
+            const fieldName = pathSegments[pathSegments.length - 1];
+
+            const property = error.property.startsWith('.') ? error.property.substring(1) : error.property;
+
+            if (errorMessageMap[property] && errorMessageMap[property][error.name]) {
+                return {
+                    ...error,
+                    message: errorMessageMap[property][error.name]
+                };
+            } else if (errorMessageMap[fieldName] && errorMessageMap[fieldName][error.name]) {
+                return {
+                    ...error,
+                    message: errorMessageMap[fieldName][error.name]
+                };
+            }
+
+            return error;
+        });
+    };
 
     const handleSubmit = async ({ formData: submittedData }: any) => {
         try {
@@ -168,6 +210,18 @@ const DynamicForm: React.FC<DynamicFormProps> = ({
         setIsModalVisible(false);
     };
 
+    const formProps = {
+        schema: formSchema,
+        validator: validator,
+        uiSchema: uiSchema,
+        formData: formData,
+        widgets: widgets,
+        onSubmit: handleSubmit,
+        ErrorList: CustomErrorList,
+        transformErrors: transformErrors,
+        showErrorList: false
+    };
+
     return (
         <>
             {trigger && React.isValidElement(trigger)
@@ -176,14 +230,7 @@ const DynamicForm: React.FC<DynamicFormProps> = ({
 
             {noModal ? (
                 formSchema ? (
-                    <Form
-                        schema={formSchema}
-                        validator={validator}
-                        uiSchema={uiSchema}
-                        formData={formData}
-                        widgets={widgets}
-                        onSubmit={handleSubmit}
-                    />
+                    <Form {...formProps} />
                 ) : (
                     <div>Loading...</div>
                 )
@@ -197,14 +244,7 @@ const DynamicForm: React.FC<DynamicFormProps> = ({
                     destroyOnClose
                 >
                     {formSchema ? (
-                        <Form
-                            schema={formSchema}
-                            validator={validator}
-                            uiSchema={uiSchema}
-                            formData={formData}
-                            widgets={widgets}
-                            onSubmit={handleSubmit}
-                        />
+                        <Form {...formProps} />
                     ) : (
                         <div>Loading...</div>
                     )}

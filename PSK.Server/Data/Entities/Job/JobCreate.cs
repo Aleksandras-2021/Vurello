@@ -1,9 +1,13 @@
 ﻿using PSK.Server.Misc;
+using System.ComponentModel.DataAnnotations;
 namespace PSK.Server.Data.Entities
 {
     public class JobCreate
     {
         [Metadata("prompt", "Job name")]
+        [Required]
+        [MinLength(3)]
+        [MaxLength(50)]
         public string Name { get; set; }
 
         [Metadata("prompt", "Job description")]
