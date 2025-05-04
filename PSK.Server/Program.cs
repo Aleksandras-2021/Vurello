@@ -107,6 +107,10 @@ builder.Services.AddCors(options =>
 
 TypeAdapterConfig.GlobalSettings.Default.IgnoreNullValues(true);
 
+TypeAdapterConfig<Guid?, Guid?>.NewConfig()
+    .MapWith(src => src == Guid.Empty ? (Guid?)null : src);
+
+
 var app = builder.Build();
 app.UseMiddleware<ExceptionHandlingMiddleware>();
 app.UseDefaultFiles();

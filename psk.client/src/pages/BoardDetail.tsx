@@ -37,10 +37,15 @@ const BoardDetail = () => {
 
             const response = await api.get(`team/${board.teamId}/members`);
 
-            setTeamMembers(response.data.map((member: any) => ({
-                value: member.id,
-                label: member.userName
-            })));
+            const membersWithUnassigned = [
+                { value: "00000000-0000-0000-0000-000000000000", label: "Unassigned" },
+                ...response.data.map((member: any) => ({
+                    value: member.id,
+                    label: member.userName
+                }))
+            ];
+
+            setTeamMembers(membersWithUnassigned);
         } catch (error) {
             console.error('Failed to fetch team members:', error);
         }
@@ -129,12 +134,12 @@ const BoardDetail = () => {
                                 }
                             >
                                 <p>{job.description}</p>
-                                {job.assignedMemberId && (
-                                    <p>
-                                        <strong>Assigned to:</strong>{' '}
-                                        {teamMembers.find((member) => member.value === job.assignedMemberId)?.label || 'Unknown'}
-                                    </p>
-                                )}
+                                <p>
+                                    <strong>Assigned to:</strong>{' '}
+                                    {job.assignedMemberId
+                                        ? teamMembers.find((member) => member.value === job.assignedMemberId)?.label || 'Unknown'
+                                        : 'Unassigned'}
+                                </p>
                             </Card>
                         </List.Item>
                     )}
