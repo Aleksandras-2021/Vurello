@@ -1,18 +1,13 @@
 import React, { useEffect, useState, ReactElement, cloneElement } from 'react';
 import Form from '@rjsf/antd';
-import { RJSFSchema, AjvError} from '@rjsf/utils';
+import { RJSFSchema } from '@rjsf/utils';
 import validator from '@rjsf/validator-ajv8';
-import axios from 'axios';
-import { Modal} from 'antd';
+import { Modal, Spin } from 'antd';
 import { ButtonProps } from 'antd';
 import { api } from './API';
 import UuidDropdownWidget from './UuidDropdownWidget';
 import RichTextWidget from './RichTextWidget';
-import { ErrorListProps } from '@rjsf/utils';
-
-const CustomErrorList = (props: ErrorListProps) => {
-    return null;
-};
+import { getSchema, getUiSchema, loadAllSchemas, isSchemaCacheLoaded } from './SchemaCache';
 
 interface DynamicFormProps {
     formTitle: string;
@@ -28,151 +23,79 @@ interface DynamicFormProps {
 }
 
 const DynamicForm: React.FC<DynamicFormProps> = ({
-    formTitle,
-    schemaName,
-    apiUrl,
-    neededData,
-    onSuccess,
-    trigger,
-    noModal,
-    type,
-    currentData = {},
-    dropdownOptions,
-}) => {
-    const [formSchema, setFormSchema] = useState<RJSFSchema | null>(null);
+                                                     formTitle,
+                                                     schemaName,
+                                                     apiUrl,
+                                                     neededData,
+                                                     onSuccess,
+                                                     trigger,
+                                                     noModal,
+                                                     type,
+                                                     currentData = {},
+                                                     dropdownOptions,
+                                                 }) => {
     const [isModalVisible, setIsModalVisible] = useState(false);
-    const [uiSchema, setUiSchema] = useState<any>({});
     const [formData, setFormData] = useState<Record<string, any>>({});
-    const [errorMessageMap, setErrorMessageMap] = useState<Record<string, Record<string, string>>>({});
+    const [loading, setLoading] = useState(false);
+    const [schema, setSchema] = useState<RJSFSchema | null>(null);
+    const [uiSchema, setUiSchema] = useState<any>({});
+
     const widgets = {
         uuidDropdown: UuidDropdownWidget,
         richText: RichTextWidget,
     };
 
+    // Load schema from cache or fetch it
     useEffect(() => {
-        const fetchSwaggerSchema = async () => {
-            try {
-                const response = await axios.get('https://localhost:7285/swagger/v1/swagger.json');
-                const swaggerDoc = response.data;
+        const loadSchema = async () => {
+            setLoading(true);
 
-                const schema = swaggerDoc.components?.schemas?.[schemaName];
+            // If schemas haven't been loaded yet, load them
+            if (!isSchemaCacheLoaded()) {
+                await loadAllSchemas();
+            }
 
-                if (!schema) {
-                    throw new Error(`Schema "${schemaName}" not found in Swagger`);
-                }
+            // Get schema from cache
+            const cachedSchema = getSchema(schemaName);
+            const cachedUiSchema = getUiSchema(schemaName);
 
-                const newUiSchema: any = {
-                    "ui:submitButtonOptions": {
-                        norender: false,
-                        submitText: "Submit",
-                        props: {
-                            style: {
-                                backgroundColor: "blue",
-                                color: "white",
-                                borderRadius: "8px",
-                                padding: "10px 20px",
-                            },
-                        },
-                    },
-                };
+            if (cachedSchema) {
+                // Clone the schema to avoid modifying the cached version
+                const clonedSchema = JSON.parse(JSON.stringify(cachedSchema));
+                const clonedUiSchema = JSON.parse(JSON.stringify(cachedUiSchema));
 
-                const filteredSchema: any = {
-                    ...schema,
-                    properties: {},
-                };
-
-                const newErrorMessageMap: Record<string, Record<string, string>> = {};
-
-                if (schema.properties) {
-                    Object.entries(schema.properties).forEach(([key, value]: [string, any]) => {
-                        if (value["x-ignore"] === "true") return;
-
-                        filteredSchema.properties[key] = value;
-
-                        const uiField: any = {};
-                        const fieldTitle = value["x-prompt"] || key;
-
-                        if (value["x-prompt"]) {
-                            uiField["ui:title"] = value["x-prompt"];
-                        }
-
-                        if (value["x-hidden"] === "true") {
-                            uiField["ui:widget"] = "password";
-                        }
-                        if (value["x-enum"]) {
-                            const options = value["x-enum"].split(',');
-                            filteredSchema.properties[key].enum = options;
-                            uiField["ui:widget"] = "select";
-                        }
-
+                // Handle dropdown options if provided
+                if (dropdownOptions && clonedSchema.properties) {
+                    Object.entries(clonedSchema.properties).forEach(([key, value]: [string, any]) => {
                         if (value["x-dropdown"]) {
-                            filteredSchema.properties[key].enum = dropdownOptions?.map(option => option.value) || [];
-                            filteredSchema.properties[key].enumNames = dropdownOptions?.map(option => option.label) || [];
-                            uiField["ui:widget"] = "uuidDropdown";
+                            clonedSchema.properties[key].enum = dropdownOptions.map(option => option.value);
+                            clonedSchema.properties[key].enumNames = dropdownOptions.map(option => option.label);
                         }
-
-                        if (value["x-richText"] === "true") {
-                            uiField["ui:widget"] = "richText";
-                        }
-
-                        newErrorMessageMap[key] = {
-                            required: `${fieldTitle} is required`,
-                            minLength: `${fieldTitle} must have at least ${value.minLength || 0} characters`,
-                            maxLength: `${fieldTitle} cannot exceed ${value.maxLength || 0} characters`,
-                            format: `Please enter a valid ${fieldTitle.toLowerCase()}`,
-                            pattern: `${fieldTitle} has an invalid format`,
-                            enum: `Please select a valid option for ${fieldTitle.toLowerCase()}`
-                        };
-
-                        newUiSchema[key] = uiField;
                     });
                 }
 
-                setErrorMessageMap(newErrorMessageMap);
-                setFormSchema(filteredSchema);
-                setUiSchema(newUiSchema);
-
-            } catch (error) {
-                console.error('Error fetching Swagger schema:', error);
+                setSchema(clonedSchema);
+                setUiSchema(clonedUiSchema);
+            } else {
+                console.error(`Schema "${schemaName}" not found in cache`);
             }
+
+            setLoading(false);
         };
 
-        handleCloseModal();
-        fetchSwaggerSchema();
+        loadSchema();
     }, [schemaName, dropdownOptions]);
 
+    // Set form data from currentData when type is patch
     useEffect(() => {
-        if (type === 'patch' && currentData && formSchema) {
-            const validKeys = Object.keys(formSchema.properties || {});
+        if (type === 'patch' && currentData && schema) {
+            const validKeys = Object.keys(schema.properties || {});
             const filteredData = Object.fromEntries(
                 Object.entries(currentData).filter(([key]) => validKeys.includes(key))
             );
             setFormData(filteredData);
         }
-    }, [currentData, formSchema, type]);
-
-    const transformErrors = (errors: AjvError[]): AjvError[] => {
-        return errors.map(error => {
-            const pathSegments = error.property.split('.');
-            const fieldName = pathSegments[pathSegments.length - 1];
-
-            const property = error.property.startsWith('.') ? error.property.substring(1) : error.property;
-
-            if (errorMessageMap[property] && errorMessageMap[property][error.name]) {
-                return {
-                    ...error,
-                    message: errorMessageMap[property][error.name]
-                };
-            } else if (errorMessageMap[fieldName] && errorMessageMap[fieldName][error.name]) {
-                return {
-                    ...error,
-                    message: errorMessageMap[fieldName][error.name]
-                };
-            }
-
-            return error;
-        });
-    };
+    }, [currentData, schema, type]);
 
     const handleSubmit = async ({ formData: submittedData }: any) => {
         try {
@@ -188,6 +111,7 @@ const DynamicForm: React.FC<DynamicFormProps> = ({
             } else {
                 payload = submittedData;
             }
+
             const fullData = {
                 ...payload,
                 ...neededData,
@@ -210,17 +134,28 @@ const DynamicForm: React.FC<DynamicFormProps> = ({
         setIsModalVisible(false);
     };
 
-    const formProps = {
-        schema: formSchema,
-        validator: validator,
-        uiSchema: uiSchema,
-        formData: formData,
-        widgets: widgets,
-        onSubmit: handleSubmit,
-        ErrorList: CustomErrorList,
-        transformErrors: transformErrors,
-        showErrorList: false
-    };
+    if (loading) {
+        return trigger
+            ? cloneElement(trigger, { disabled: true })
+            : <Spin size="small" />;
+    }
+
+    if (!schema) {
+        return trigger
+            ? cloneElement(trigger, { disabled: true })
+            : <div>Schema not found</div>;
+    }
+
+    const formComponent = (
+        <Form
+            schema={schema}
+            uiSchema={uiSchema}
+            validator={validator}
+            formData={formData}
+            widgets={widgets}
+            onSubmit={handleSubmit}
+        />
+    );
 
     return (
         <>
@@ -229,11 +164,7 @@ const DynamicForm: React.FC<DynamicFormProps> = ({
                 : null}
 
             {noModal ? (
-                formSchema ? (
-                    <Form {...formProps} />
-                ) : (
-                    <div>Loading...</div>
-                )
+                formComponent
             ) : (
                 <Modal
                     title={formTitle}
@@ -243,11 +174,7 @@ const DynamicForm: React.FC<DynamicFormProps> = ({
                     width={600}
                     destroyOnClose
                 >
-                    {formSchema ? (
-                        <Form {...formProps} />
-                    ) : (
-                        <div>Loading...</div>
-                    )}
+                    {formComponent}
                 </Modal>
             )}
         </>

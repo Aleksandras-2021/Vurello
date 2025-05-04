@@ -41,6 +41,7 @@ public class InvitationService : GenericService<Invitation, InvitationCreate, In
         {
             throw new KeyNotFoundException("User not found");
         }
+
         if (recipient.Id == senderUserId)
         {
             throw new InvalidOperationException("Cannot invite yourself.");

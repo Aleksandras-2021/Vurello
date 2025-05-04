@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
 import DynamicForm from '../components/DynamicForm';
-import { Button, Spin, Modal, Table, Space, Typography, Card, Divider, Layout, Collapse, List, Popconfirm } from 'antd';
+import { Button, Spin, Modal, Table, Space, Typography, Card, Divider, Layout, Collapse, List, Popconfirm, message } from 'antd';
 import { ArrowLeftOutlined, PlusOutlined, UserOutlined, DeleteOutlined } from '@ant-design/icons';
 import { api } from '../components/API';
 import { toast } from 'react-toastify';
@@ -19,23 +19,6 @@ const TeamBoards = () => {
     const [members, setMembers] = useState<any[]>([]);
     const [refreshMembersTrigger, setRefreshMembersTrigger] = useState(0);
     const [isCreator, setIsCreator] = useState(false);
-
-    const columns = [
-        {
-            title: 'Name',
-            dataIndex: 'userName',
-            key: 'userName',
-        },
-        {
-            title: 'Actions',
-            key: 'actions',
-            render: (_, record) => (
-                <Space>
-                    <Button type="link" danger>Remove</Button>
-                </Space>
-            )
-        }
-    ];
 
     const fetchMembers = async () => {
         try {
@@ -78,6 +61,16 @@ const TeamBoards = () => {
         }
     };
 
+    const handleRemoveMember = async (memberId: string) => {
+        try {
+            await api.delete(`team/${teamId}/members/${memberId}`);
+            toast.success('Member removed successfully');
+            fetchMembers();
+        } catch (error) {
+            console.error('Failed to remove member:', error);
+        }
+    };
+
     useEffect(() => {
         if (!teamId) return;
 
@@ -93,6 +86,33 @@ const TeamBoards = () => {
     if (loading) {
         return <Spin size="large" />;
     }
+
+    const columns = [
+        {
+            title: 'Name',
+            dataIndex: 'userName',
+            key: 'userName',
+        },
+        {
+            title: 'Actions',
+            key: 'actions',
+            render: (_, record) => (
+                <Space>
+                    {isCreator && record.id !== team.creatorId && (
+                        <Popconfirm
+                            title="Remove Member"
+                            description="Are you sure you want to remove this member from the team?"
+                            onConfirm={() => handleRemoveMember(record.id)}
+                            okText="Yes"
+                            cancelText="No"
+                        >
+                            <Button type="link" danger>Remove</Button>
+                        </Popconfirm>
+                    )}
+                </Space>
+            )
+        }
+    ];
 
     return (
         <div style={{ padding: 24 }}>

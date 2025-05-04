@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
 import { jwtDecode } from 'jwt-decode';
-import {setRefreshTokenFn } from './API';
+import { setRefreshTokenFn } from './API';
 import axios from 'axios';
 
 interface AuthContextType {
@@ -31,6 +31,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             setUserId(null);
             setTokenExpiration(null);
         }
+
         setRefreshTokenFn(async () => {
             try {
                 const response = await axios.post(
@@ -48,7 +49,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
                 return newToken;
             } catch (error) {
                 console.error('Error refreshing token:', error);
-                logout(); 
+                logout();
                 return null;
             }
         });
@@ -68,7 +69,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     };
 
     return (
-        <AuthContext.Provider value={{ token, userId, tokenExpiration, loading, login, logout, }}>
+        <AuthContext.Provider value={{ token, userId, tokenExpiration, loading, login, logout }}>
             {children}
         </AuthContext.Provider>
     );
@@ -76,6 +77,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
 export const useAuth = () => {
     const context = useContext(AuthContext);
-    if (!context) throw new Error();
+    if (!context) throw new Error('useAuth must be used within an AuthProvider');
     return context;
 };

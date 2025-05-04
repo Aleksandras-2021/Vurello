@@ -7,6 +7,7 @@ using PSK.Server.Specifications.TeamSpecifications;
 public interface ITeamService : IGenericService<Team, TeamCreate, TeamUpdate>
 {
     void AddUserToTeam(Team team, User user);
+    Task RemoveUserFromTeam(Guid teamId, Guid userId);
 }
 
 public class TeamService : GenericService<Team, TeamCreate, TeamUpdate>, ITeamService
@@ -58,5 +59,34 @@ public class TeamService : GenericService<Team, TeamCreate, TeamUpdate>, ITeamSe
         }
 
         team.Users.Add(user);
+    }
+
+    public async Task RemoveUserFromTeam(Guid teamId, Guid userId)
+    {
+        var team = await _repository.SingleOrDefaultAsync(new GetTeamByIdSpec(teamId));
+        if (team == null)
+        {
+            throw new KeyNotFoundException($"Team with ID {teamId} not found.");
+        }
+
+        if (team.CreatorId == userId.ToString())
+        {
+            throw new InvalidOperationException("Cannot remove creator from team.");
+        }
+
+        var user = await _userManager.FindByIdAsync(userId.ToString());
+        if (user == null)
+        {
+            throw new KeyNotFoundException($"User with ID {userId} not found.");
+        }
+        
+        var userInTeam = team.Users.FirstOrDefault(u => u.Id == userId.ToString());
+        if (userInTeam == null)
+        {
+            throw new InvalidOperationException($"User with ID {userId} is not a member of the team.");
+        }
+        
+        team.Users.Remove(userInTeam);
+        await _teamRepository.UpdateAsync(team);
     }
 }

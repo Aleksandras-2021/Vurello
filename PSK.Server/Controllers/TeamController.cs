@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using PSK.Server.Data.Entities;
 using PSK.Server.Misc;
 using PSK.Server.Specifications.TeamSpecifications;
+using PSK.Server.Services;
 
 namespace PSK.Controllers
 {
@@ -43,6 +44,36 @@ namespace PSK.Controllers
             var teamMembers = await _teamService.GetAllAsync(new GetTeamMembersByIdSpec(id));
 
             return Ok(teamMembers);
+        }
+
+        [HttpDelete("{teamId}/members/{userId}")]
+        public async Task<IActionResult> RemoveMember(Guid teamId, Guid userId)
+        {
+            var team = await _teamService.GetSingleAsync(new GetTeamByIdSpec(teamId));
+            var currentUserId = _userContext.GetUserId(User).ToString();
+            if (team.CreatorId != currentUserId)
+            {
+                return Forbid("Only the team creator can remove members.");
+            }
+
+            if (userId.ToString() == team.CreatorId)
+            {
+                return BadRequest("Cannot remove creator from team.");
+            }
+
+            try
+            {
+                await _teamService.RemoveUserFromTeam(teamId, userId);
+                return NoContent();
+            }
+            catch (KeyNotFoundException e)
+            {
+                return NotFound(e.Message);
+            }
+            catch (InvalidOperationException e)
+            {
+               return BadRequest(e.Message); 
+            }
         }
     }
 }
