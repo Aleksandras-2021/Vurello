@@ -3,7 +3,7 @@ using System.Text.Json.Serialization;
 
 namespace PSK.Server.Data.Entities
 {
-    public class User : IdentityUser
+    public class User : IdentityUser<Guid>
     {
         [JsonIgnore]
         public ICollection<Team> Teams { get; set; } = new List<Team>();

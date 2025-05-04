@@ -24,7 +24,7 @@ public class TeamService : GenericService<Team, TeamCreate, TeamUpdate>, ITeamSe
     public override async Task OnCreatingAsync(Team entity, TeamCreate create)
     {
         var user = await _userManager.FindByIdAsync(create.UserId);
-        entity.CreatorId = create.UserId;
+        entity.CreatorId = Guid.Parse(create.UserId);
         AddUserToTeam(entity, user);
     }
 
@@ -37,7 +37,7 @@ public class TeamService : GenericService<Team, TeamCreate, TeamUpdate>, ITeamSe
         {
             throw new KeyNotFoundException("Team wiht ID {id} not found.");
         }
-        return team.CreatorId == userId;
+        return team.CreatorId.ToString() == userId;
     }
     
     public void AddUserToTeam(Team team, User user)

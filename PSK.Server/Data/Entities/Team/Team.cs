@@ -9,7 +9,7 @@ namespace PSK.Server.Data.Entities
 
         public string Name { get; set; }
 
-        public string? CreatorId { get; set; }
+        public Guid? CreatorId { get; set; }
         public User? Creator { get; set; }
         public ICollection<Board> Boards { get; set; } = new List<Board>();
 

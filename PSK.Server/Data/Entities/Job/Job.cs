@@ -9,7 +9,7 @@
 
         public Guid BoardId { get; set; }
         public Board Board { get; set; }
-        public String? AssignedMemberId { get; set; }
+        public Guid? AssignedMemberId { get; set; }
         public User? AssignedMember { get; set; }
     }
 }

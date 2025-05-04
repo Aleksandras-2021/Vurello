@@ -47,7 +47,7 @@ public class InvitationController : GenericController<Invitation, InvitationCrea
     [HttpPost("{id}/respond")]
     public async Task<IActionResult> RespondToInvitation(Guid id, [FromBody] bool accept)
     {
-        var userId = _userContext.GetUserId(User).ToString();
+        var userId = _userContext.GetUserId(User);
 
         var invitation = await _invitationService.GetSingleAsync(new GetInvitationByIdSpec(id));
 
@@ -60,7 +60,7 @@ public class InvitationController : GenericController<Invitation, InvitationCrea
             if (team == null)
                 return BadRequest();
 
-            var user = await _userManager.FindByIdAsync(userId);
+            var user = await _userManager.FindByIdAsync(userId.ToString());
             if (user == null)
                 return BadRequest();
 

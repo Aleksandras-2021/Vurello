@@ -57,7 +57,7 @@ builder.Services.AddScoped<ITeamService, TeamService>();
 builder.Services.AddScoped<IJobService, JobService>();
 builder.Services.AddScoped<IInvitationService, InvitationService>();
 
-builder.Services.AddIdentity<User, IdentityRole>(options =>
+builder.Services.AddIdentity<User, IdentityRole<Guid>>(options =>
 {
     options.Password.RequireDigit = false;
     options.Password.RequireLowercase = false;

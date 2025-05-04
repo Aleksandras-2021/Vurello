@@ -8,7 +8,7 @@ namespace PSK.Server.Specifications.InvitationSpecifications
         public GetUserInvitationsSpec(string userId)
         {
             Query
-                .Where(i => i.RecipientUserId == userId && !i.IsAccepted && !i.IsRejected)
+                .Where(i => i.RecipientUserId.ToString() == userId && !i.IsAccepted && !i.IsRejected)
                 .Include(i => i.Team)
                 .Include(i => i.Sender);
         }

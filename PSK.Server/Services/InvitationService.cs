@@ -29,7 +29,7 @@ public class InvitationService : GenericService<Invitation, InvitationCreate, In
     {
         // Find recipient by username
         var recipient = await _userManager.FindByNameAsync(create.RecipientUsername);
-        var senderUserId = _userContext.GetUserId(_httpContextAccessor.HttpContext.User).ToString();
+        var senderUserId = _userContext.GetUserId(_httpContextAccessor.HttpContext.User);
 
         if (recipient == null)
         {

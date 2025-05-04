@@ -8,7 +8,7 @@ namespace PSK.Server.Specifications.TeamSpecifications
         public GetUserTeamsSpec(Guid userId)
         {
           Query
-              .Where(t => t.Users.Any(u => u.Id == userId.ToString()))
+              .Where(t => t.Users.Any(u => u.Id == userId))
               .Include(t => t.Boards);
         }
     }

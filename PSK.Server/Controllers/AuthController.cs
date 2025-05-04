@@ -107,9 +107,9 @@ namespace PSK.Server.Controllers
         {
             var claims = new[]
             {
-                new Claim(ClaimTypes.NameIdentifier, user.Id),
+                new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
                 new Claim(ClaimTypes.Name, user.UserName),
-                new Claim("userId", user.Id),
+                new Claim("userId", user.Id.ToString()),
             };
 
             var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes("SecretSecret123...SecretAAAAAAAAAAA"));

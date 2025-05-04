@@ -5,8 +5,8 @@ namespace PSK.Server.Data.Entities
     public class Invitation
     {
          public Guid Id { get; set; }
-         public string RecipientUserId { get; set; } = string.Empty;
-         public string SenderUserId { get; set; } = string.Empty;
+         public Guid? RecipientUserId { get; set; }
+         public Guid? SenderUserId { get; set; }
          
          public Guid TeamId { get; set; }
          public DateTime CreatedAt { get; set; }
