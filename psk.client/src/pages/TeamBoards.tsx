@@ -65,6 +65,15 @@ const TeamBoards = () => {
         }
     };
 
+    const handleDeleteBoard = async (boardId: string) => {
+        try {
+            await api.delete(`board/${boardId}`);
+            fetchTeam();
+        } catch (error) {
+            console.error('Failed to delete board:', error);
+        }
+    };
+
     const handleRemoveMember = async (memberId: string) => {
         try {
             await api.delete(`team/${teamId}/members/${memberId}`);
@@ -243,6 +252,25 @@ const TeamBoards = () => {
                                     }
                                     currentData={board}
                                 />
+                                    <Popconfirm
+                                        title="Delete Board"
+                                        description="Are you sure you want to delete this Board? This action cannot be undone, and will delete all jobs belonging to the board."
+                                        onConfirm={(e) => {
+                                            e.stopPropagation()
+                                            handleDeleteBoard(board.id)
+                                        }}
+                                        okText="Yes, Delete"
+                                        cancelText="Cancel"
+                                        okButtonProps={{ danger: true }}
+                                    >
+                                        <Button
+                                            danger
+                                            icon={<DeleteOutlined />}
+                                            size="small"
+                                            type="text"
+                                        >
+                                        </Button>
+                                    </Popconfirm>
                             </div>
                         </div>
                     </List.Item>

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { Card, Typography, Spin, Button, List, Row, Col, Tag } from 'antd';
-import { PlusOutlined, ArrowLeftOutlined } from '@ant-design/icons';
+import { Card, Typography, Spin, Button, List, Row, Col, Tag, message, Popconfirm } from 'antd';
+import { PlusOutlined, ArrowLeftOutlined, DeleteOutlined } from '@ant-design/icons';
 import DynamicForm from '../components/DynamicForm';
 import { api } from "../components/API";
 import { EditOutlined } from '@ant-design/icons';
@@ -50,6 +50,15 @@ const BoardDetail = () => {
             setTeamMembers(membersWithUnassigned);
         } catch (error) {
             console.error('Failed to fetch team members:', error);
+        }
+    };
+
+    const handleDeleteJob = async (jobId: string) => {
+        try {
+            await api.delete(`job/${jobId}`);
+            fetchBoardData();
+        } catch (error) {
+            console.error('Failed to delete job:', error);
         }
     };
 
@@ -132,6 +141,27 @@ const BoardDetail = () => {
                                                             currentData={job}
                                                             dropdownOptions={teamMembers}
                                                         />
+                                                    </Col>
+                                                    <Col>
+                                                        <Popconfirm
+                                                            title="Delete Job"
+                                                            description="Are you sure you want to delete this job? This action cannot be undone."
+                                                            onConfirm={(e) => {
+                                                                e.stopPropagation()
+                                                                handleDeleteJob(job.id)
+                                                            }}
+                                                            okText="Yes, Delete"
+                                                            cancelText="Cancel"
+                                                            okButtonProps={{ danger: true }}
+                                                        >
+                                                            <Button
+                                                                danger
+                                                                icon={<DeleteOutlined />}
+                                                                size="small"
+                                                                type="text"
+                                                            >
+                                                            </Button>
+                                                        </Popconfirm>
                                                     </Col>
                                                 </Row>
                                             }
