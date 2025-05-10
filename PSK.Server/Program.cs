@@ -9,6 +9,11 @@ using PSK.Server.Misc;
 using System.Text;
 using PSK.Server.Services;
 using PSK.Server.Middlewares;
+using Autofac.Extensions.DependencyInjection;
+using Autofac;
+using Autofac.Extras.DynamicProxy;
+using PSK.Server.Interceptors;
+using Microsoft.Extensions.Options;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -56,6 +61,35 @@ builder.Services.AddScoped<IBoardService, BoardService>();
 builder.Services.AddScoped<ITeamService, TeamService>();
 builder.Services.AddScoped<IJobService, JobService>();
 builder.Services.AddScoped<IInvitationService, InvitationService>();
+
+builder.Services.AddHttpContextAccessor();
+
+//Logging Interceptor
+builder.Services.Configure<LoggingInterceptorOptions>(
+    builder.Configuration.GetSection("LoggingInterceptor"));
+
+builder.Host.UseServiceProviderFactory(new AutofacServiceProviderFactory());
+builder.Host.ConfigureContainer<ContainerBuilder>(containerBuilder =>
+{
+    containerBuilder.Register(c =>
+    {
+        var sp = c.Resolve<IServiceProvider>();
+        var options = sp.GetRequiredService<IOptions<LoggingInterceptorOptions>>().Value;
+        var httpContextAccessor = sp.GetRequiredService<IHttpContextAccessor>();
+
+        var projectRoot = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, @"..\..\..\..")); //log to Kredditoriai/psk.log
+        var fullPath = Path.Combine(projectRoot, options.LogFilePath);
+
+        return new LoggingInterceptor(fullPath, httpContextAccessor, options.Enabled);
+    }).AsSelf().InstancePerDependency();
+
+    containerBuilder.RegisterAssemblyTypes(typeof(Program).Assembly)
+        .Where(t => t.Name.EndsWith("Service"))
+        .AsImplementedInterfaces()
+        .EnableInterfaceInterceptors()
+        .InterceptedBy(typeof(LoggingInterceptor));
+});
+
 
 builder.Services.AddIdentity<User, IdentityRole<Guid>>(options =>
 {
@@ -112,7 +146,6 @@ TypeAdapterConfig<Guid?, Guid?>.NewConfig()
 
 
 var app = builder.Build();
-app.UseMiddleware<ExceptionHandlingMiddleware>();
 app.UseDefaultFiles();
 app.MapStaticAssets();
 
@@ -128,6 +161,8 @@ app.UseCors("AllowAll");
 
 app.UseAuthentication();
 app.UseAuthorization();
+
+app.UseMiddleware<ExceptionHandlingMiddleware>();
 
 
 app.MapControllers();

@@ -1,6 +1,5 @@
 ﻿using Ardalis.Specification;
 using Mapster;
-using Microsoft.AspNetCore.Http.HttpResults;
 using System.Security.Claims;
 
 public interface IGenericService<TEntity, TCreate, TUpdate>
