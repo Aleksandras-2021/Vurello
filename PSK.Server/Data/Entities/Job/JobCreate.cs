@@ -18,6 +18,10 @@ namespace PSK.Server.Data.Entities
         [Metadata("enum", "To Do,In Progress,Done")]
         public string Status { get; set; } = "To Do";
 
+        [Metadata("prompt", "Deadline")]
+        [Metadata("format", "datetime-local")]
+        public DateTime? Deadline { get; set; }
+
         [Metadata("ignore", "true")]
         public Guid BoardId { get; set; }
 
