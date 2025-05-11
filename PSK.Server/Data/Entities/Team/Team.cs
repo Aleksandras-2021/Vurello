@@ -14,5 +14,6 @@ namespace PSK.Server.Data.Entities
         public ICollection<Board> Boards { get; set; } = new List<Board>();
 
         public ICollection<User> Users { get; set; } = new List<User>();
+        public ICollection<Label> Labels { get; set; } = new List<Label>();
     }
 }

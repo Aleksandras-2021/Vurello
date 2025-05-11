@@ -1,4 +1,6 @@
 ﻿using PSK.Server.Misc;
+using System.Text.Json.Serialization;
+
 namespace PSK.Server.Data.Entities
 {
     public class JobUpdate
@@ -21,5 +23,6 @@ namespace PSK.Server.Data.Entities
         [Metadata("prompt", "Assigned Member")]
         [Metadata("dropdown", "Assigned Member")]
         public Guid? AssignedMemberId { get; set; }
+
     }
 }

@@ -75,8 +75,8 @@ public class GenericService<TEntity, TCreate, TUpdate> : IGenericService<TEntity
             throw new Exception();
         }
 
-        update.Adapt(entity);
         await OnUpdatingAsync(entity, update);
+        update.Adapt(entity);
 
         await _repository.UpdateAsync(entity);
 
@@ -124,4 +124,5 @@ public class GenericService<TEntity, TCreate, TUpdate> : IGenericService<TEntity
     {
         await Task.CompletedTask;
     }
+
 }

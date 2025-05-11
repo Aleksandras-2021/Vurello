@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using PSK.Controllers;
 using PSK.Server.Data.Entities;
 using PSK.Server.Specifications.JobSpecifications;
@@ -30,5 +31,13 @@ namespace PSK.Controllers
             return Ok(allJobs);
         }
 
+        [HttpPut("{jobId}/labels")]
+        public async Task<IActionResult> UpdateLabels(Guid jobId, [FromBody] List<Guid> labelIds)
+        {
+            var job = await _jobService.GetSingleAsync(new GetJobByIdSpec(jobId));
+            await _jobService.UpdateLabels(job, labelIds);
+
+            return Ok();
+        }
     }
 }

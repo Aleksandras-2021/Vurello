@@ -61,6 +61,7 @@ builder.Services.AddScoped<IBoardService, BoardService>();
 builder.Services.AddScoped<ITeamService, TeamService>();
 builder.Services.AddScoped<IJobService, JobService>();
 builder.Services.AddScoped<IInvitationService, InvitationService>();
+builder.Services.AddScoped<ILabelService, LabelService>();
 
 builder.Services.AddHttpContextAccessor();
 

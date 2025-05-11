@@ -76,6 +76,10 @@ export const loadAllSchemas = async (): Promise<void> => {
                         uiField["ui:widget"] = "richText";
                     }
 
+                    if (value["x-colorPick"] === "true") {
+                        uiField["ui:widget"] = "colorPick";
+                    }
+
                     uiSchema[key] = uiField;
                 });
             }

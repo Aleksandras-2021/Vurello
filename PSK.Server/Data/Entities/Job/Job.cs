@@ -13,5 +13,7 @@
         public Board Board { get; set; }
         public Guid? AssignedMemberId { get; set; }
         public User? AssignedMember { get; set; }
+
+        public ICollection<Label> Labels { get; set; } = new List<Label>();
     }
 }

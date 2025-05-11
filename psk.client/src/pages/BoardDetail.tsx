@@ -23,9 +23,9 @@ import { HTML5Backend } from 'react-dnd-html5-backend';
 import DynamicForm from '../components/DynamicForm';
 import { api } from '../components/API';
 import AppLayout from '../components/AppLayout';
+import JobDetail from '../components/JobDetail';
 
 const { Title, Text } = Typography;
-
 
 const ItemTypes = {
     CARD: 'card',
@@ -56,7 +56,7 @@ const formatDeadlineDate = (deadline: string | null): string => {
     return `Due: ${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')} ${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
 };
 
-const DraggableJobCard = ({ job, teamMembers, onDrop, boardId }) => {
+const DraggableJobCard = ({ job, teamMembers, onDrop, boardId, setSelectedJob }) => {
     const [{ isDragging }, drag] = useDrag(() => ({
         type: ItemTypes.CARD,
         item: { id: job.id, currentStatus: job.status },
@@ -69,50 +69,68 @@ const DraggableJobCard = ({ job, teamMembers, onDrop, boardId }) => {
     return (
         <div ref={drag} style={{ opacity: isDragging ? 0.5 : 1 }}>
             <Card
+                hoverable
+                onClick={() => setSelectedJob(job)}
                 style={{ marginBottom: 16 }}
-                title={job.name}
+                title={<span style={{ fontWeight: 600 }}>{job.name}</span>}
                 extra={
-                    <Row gutter={8}>
-                        <Col>
-                            <Tag color={getStatusColor(job.status)}>{job.status}</Tag>
-                        </Col>
-                        <Col>
-                            <DynamicForm
-                                formTitle={`Edit Job: ${job.name}`}
-                                schemaName="JobUpdate"
-                                apiUrl={`job/${job.id}`}
-                                type="patch"
-                                onSuccess={() => onDrop()}
-                                trigger={<Button icon={<EditOutlined />} size="small" type="text" />}
-                                neededData={{ boardId }}
-                                currentData={job}
-                                dropdownOptions={teamMembers}
-                            />
-                        </Col>
-                        <Col>
-                            <Popconfirm
-                                title="Delete Job"
-                                description="Are you sure you want to delete this job? This action cannot be undone."
-                                onConfirm={(e) => {
-                                    e.stopPropagation();
-                                    onDrop(job.id, true);
-                                }}
-                                okText="Yes, Delete"
-                                cancelText="Cancel"
-                                okButtonProps={{ danger: true }}
-                            >
-                                <Button danger icon={<DeleteOutlined />} size="small" type="text" />
-                            </Popconfirm>
-                        </Col>
-                    </Row>
+                    <Popconfirm
+                        title="Delete Job"
+                        description="Are you sure you want to delete this job? This action cannot be undone."
+                        onConfirm={(e) => {
+                            e.stopPropagation();
+                            onDrop(job.id, true);
+                        }}
+                        okText="Yes, Delete"
+                        cancelText="Cancel"
+                        okButtonProps={{ danger: true }}
+                    >
+                        <Button
+                            danger
+                            icon={<DeleteOutlined />}
+                            size="small"
+                            type="text"
+                            onClick={(e) => e.stopPropagation()}
+                        />
+                    </Popconfirm>
                 }
             >
-                <p>{job.description}</p>
+                <Row gutter={[8, 8]} align="middle" wrap>
+                    <Col>
+                        <Tag color={getStatusColor(job.status)}>{job.status}</Tag>
+                    </Col>
+
+                    {job.labels &&
+                        job.labels.slice(0, 3).map((label, index) => (
+                            <Col key={index}>
+                                <Tag
+                                    color={label.backgroundColor}
+                                    style={{
+                                        color: label.textColor,
+                                        wordWrap: 'break-word',
+                                        whiteSpace: 'normal',
+                                        maxWidth: '200px',
+                                    }}
+                                >
+                                    {label.text}
+                                </Tag>
+                            </Col>
+                        ))}
+
+                    {job.labels && job.labels.length > 3 && (
+                        <Col>
+                            <Tag>And {job.labels.length - 3} more</Tag>
+                        </Col>
+                    )}
+                </Row>
+
                 {job.assignedMemberId && (
-                    <p>
-                        <strong>Assigned to:</strong> {teamMembers.find((m) => m.value === job.assignedMemberId)?.label || 'Unknown'}
+                    <p style={{ marginTop: 12 }}>
+                        <strong>Assigned to:</strong>{' '}
+                        {teamMembers.find((m) => m.value === job.assignedMemberId)?.label || 'Unknown'}
                     </p>
                 )}
+
                 {job.deadline && (
                     <p>
                         <ClockCircleOutlined style={{ marginRight: 8, color: overdue ? '#ff4d4f' : 'inherit' }} />
@@ -122,11 +140,12 @@ const DraggableJobCard = ({ job, teamMembers, onDrop, boardId }) => {
                     </p>
                 )}
             </Card>
+
         </div>
     );
 };
 
-const DroppableColumn = ({ status, jobs, onDrop, teamMembers, boardId }) => {
+const DroppableColumn = ({ status, jobs, onDrop, teamMembers, boardId, setSelectedJob }) => {
     const [{ isOver, canDrop }, drop] = useDrop(() => ({
         accept: ItemTypes.CARD,
         drop: (item) => {
@@ -164,6 +183,7 @@ const DroppableColumn = ({ status, jobs, onDrop, teamMembers, boardId }) => {
                                 teamMembers={teamMembers}
                                 onDrop={onDrop}
                                 boardId={boardId}
+                                setSelectedJob={setSelectedJob}
                             />
                         ))
                     )}
@@ -173,22 +193,24 @@ const DroppableColumn = ({ status, jobs, onDrop, teamMembers, boardId }) => {
     );
 };
 
-
 const BoardDetail = () => {
     const { boardId } = useParams();
     const [board, setBoard] = useState<any>(null);
     const [jobs, setJobs] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [teamMembers, setTeamMembers] = useState<any[]>([]);
+    const [selectedJob, setSelectedJob] = useState<any | null>(null);
 
     const fetchBoardData = async () => {
         setLoading(true);
         try {
             const boardResponse = await api.get(`board/${boardId}`);
             setBoard(boardResponse.data);
-
-            const jobsResponse = await api.get(`job`, { params: { boardId } });
-            setJobs(jobsResponse.data);
+            setJobs(boardResponse.data.jobs);
+            if (selectedJob) {
+                const newSelectedJob = boardResponse.data.jobs.find(job => job.id === selectedJob.id);
+                setSelectedJob(newSelectedJob || null);
+            }
         } catch (error) {
             console.error('Failed to fetch board data:', error);
         } finally {
@@ -250,17 +272,29 @@ const BoardDetail = () => {
                     />
                 </div>
                 <Row gutter={16}>
-                    {['to do', 'in progress', 'done'].map((status) => (
+                    {['To Do', 'In Progress', 'Done'].map((status) => (
                         <DroppableColumn
                             key={status}
                             status={status}
-                            jobs={jobs.filter((job) => job.status.toLowerCase() === status)}
+                            jobs={jobs.filter((job) => job.status === status)}
                             onDrop={updateJobStatus}
                             teamMembers={teamMembers}
                             boardId={boardId}
+                            setSelectedJob={setSelectedJob}
                         />
                     ))}
                 </Row>
+                {selectedJob && (
+                    <JobDetail
+                        open={!!selectedJob}
+                        onCancel={() => setSelectedJob(null)}
+                        job={selectedJob}
+                        labels={board.team.labels}
+                        teamId={board.teamId}
+                        teamMembers={teamMembers}
+                        onSuccess={fetchBoardData}
+                    />
+                )}
             </DndProvider>
         </AppLayout>
     );

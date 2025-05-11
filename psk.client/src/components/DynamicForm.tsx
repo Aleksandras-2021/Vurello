@@ -7,6 +7,7 @@ import { ButtonProps } from 'antd';
 import { api } from './API';
 import UuidDropdownWidget from './UuidDropdownWidget';
 import RichTextWidget from './RichTextWidget';
+import ColorPickWidget from './ColorPickWidget';
 import { getSchema, getUiSchema, loadAllSchemas, isSchemaCacheLoaded } from './SchemaCache';
 
 interface DynamicFormProps {
@@ -43,6 +44,7 @@ const DynamicForm: React.FC<DynamicFormProps> = ({
     const widgets = {
         uuidDropdown: UuidDropdownWidget,
         richText: RichTextWidget,
+        colorPick: ColorPickWidget,
     };
 
     // Load schema from cache or fetch it
