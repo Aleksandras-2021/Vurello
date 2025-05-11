@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { List, Typography, Button, Modal, message, Badge, Dropdown } from 'antd';
 import { MailOutlined, BellOutlined, CheckOutlined, CloseOutlined } from '@ant-design/icons';
 import { api } from './API';
+import { toast } from 'react-toastify';
 
 const { Title } = Typography;
 
@@ -38,7 +39,7 @@ const UserInbox: React.FC = () => {
                 headers: { 'Content-Type': 'application/json' }
             });
 
-            message.success(`Invitation ${accept ? 'accepted' : 'declined'}`);
+            toast.success(`Invitation ${accept ? 'accepted' : 'declined'} successfully`);
             fetchInvitations();
 
             if (accept) {

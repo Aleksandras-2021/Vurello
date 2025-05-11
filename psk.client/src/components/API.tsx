@@ -60,9 +60,23 @@ api.interceptors.response.use(
             const errorMessage =
                 title || detail || message || `An error occurred (status ${status || 'unknown'})`;
 
-            toast.error(errorMessage);
+            toast.error(errorMessage, {
+                position: 'top-right',
+                autoClose: 5000,
+                hideProgressBar: false,
+                closeOnClick: true,
+                pauseOnHover: true,
+                draggable: true,
+            });
         } else {
-            toast.error(error.message || 'An unexpected error occurred.');
+            toast.error(error.message || 'An unexpected error occurred.', {
+                position: 'top-right',
+                autoClose: 5000,
+                hideProgressBar: false,
+                closeOnClick: true,
+                pauseOnHover: true,
+                draggable: true,
+            });
         }
 
         return Promise.reject(error);

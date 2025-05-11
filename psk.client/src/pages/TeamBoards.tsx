@@ -68,6 +68,7 @@ const TeamBoards = () => {
     const handleDeleteBoard = async (boardId: string) => {
         try {
             await api.delete(`board/${boardId}`);
+            toast.success('Board deleted successfully');
             fetchTeam();
         } catch (error) {
             console.error('Failed to delete board:', error);

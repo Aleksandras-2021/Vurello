@@ -9,6 +9,7 @@ import UuidDropdownWidget from './UuidDropdownWidget';
 import RichTextWidget from './RichTextWidget';
 import ColorPickWidget from './ColorPickWidget';
 import { getSchema, getUiSchema, loadAllSchemas, isSchemaCacheLoaded } from './SchemaCache';
+import { toast } from 'react-toastify';
 
 interface DynamicFormProps {
     formTitle: string;
@@ -120,11 +121,16 @@ const DynamicForm: React.FC<DynamicFormProps> = ({
             };
 
             const response = await api[type === 'patch' ? 'patch' : 'post'](apiUrl, fullData);
+
+            // Show success toast message
+            const action = type === 'patch' ? 'updated' : 'created';
+            toast.success(`${formTitle} ${action} successfully`);
+
             onSuccess?.(response.data);
             handleCloseModal();
-            console.log('Form submitted successfully:', response.data);
         } catch (error) {
             console.error('Form submission error:', error);
+            // Error handling is already covered by the API interceptor
         }
     };
 

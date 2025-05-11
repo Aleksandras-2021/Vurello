@@ -23,7 +23,9 @@ import { HTML5Backend } from 'react-dnd-html5-backend';
 import DynamicForm from '../components/DynamicForm';
 import { api } from '../components/API';
 import AppLayout from '../components/AppLayout';
+import { toast } from 'react-toastify';
 import JobDetail from '../components/JobDetail';
+
 
 const { Title, Text } = Typography;
 
@@ -236,8 +238,10 @@ const BoardDetail = () => {
         try {
             if (deleteJob) {
                 await api.delete(`job/${jobId}`);
+                toast.success("Job deleted successfully");
             } else if (newStatus) {
                 await api.patch(`job/${jobId}`, { status: newStatus });
+                toast.success(`Job moved to ${newStatus} successfully`);
             }
             fetchBoardData();
         } catch (err) {
