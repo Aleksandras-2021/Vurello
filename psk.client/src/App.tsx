@@ -10,6 +10,8 @@ import Navbar from './components/Navbar';
 import { ToastContainer } from 'react-toastify';
 import { AppProvider } from './components/AppContext';
 import { Layout } from 'antd';
+import { DndProvider } from 'react-dnd';
+import { HTML5Backend } from 'react-dnd-html5-backend';
 
 const AppLayout = ({ children }: { children: React.ReactNode }) => (
     <Layout style={{ minHeight: '100vh' }}>
@@ -31,14 +33,16 @@ const App = () => {
                             path="*"
                             element={
                                 <PrivateRoute>
-                                    <AppLayout>
-                                        <Routes>
-                                            <Route path="/" element={<Navigate to="/teams" replace />} />
-                                            <Route path="/teams" element={<Teams />} />
-                                            <Route path="/teams/:teamId" element={<TeamBoards />} />
-                                            <Route path="/boards/:boardId" element={<BoardDetail />} />
-                                        </Routes>
-                                    </AppLayout>
+                                    <DndProvider backend={HTML5Backend}>
+                                        <AppLayout>
+                                            <Routes>
+                                                <Route path="/" element={<Navigate to="/teams" replace />} />
+                                                <Route path="/teams" element={<Teams />} />
+                                                <Route path="/teams/:teamId" element={<TeamBoards />} />
+                                                <Route path="/boards/:boardId" element={<BoardDetail />} />
+                                            </Routes>
+                                        </AppLayout>
+                                    </DndProvider>
                                 </PrivateRoute>
                             }
                         />
