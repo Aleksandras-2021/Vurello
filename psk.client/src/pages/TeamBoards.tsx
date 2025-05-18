@@ -310,6 +310,14 @@ const TeamBoards = () => {
                                     cancelText="Cancel"
                                     okButtonProps={{ danger: true }}
                                 >
+
+                                    <Button
+                                        danger
+                                        icon={<DeleteOutlined />}
+                                        size="small"
+                                        type="text"
+                                    >
+                                    </Button>
                                 </Popconfirm>
                             </div>
                         </div>
