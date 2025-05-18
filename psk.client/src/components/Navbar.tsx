@@ -6,6 +6,7 @@ import {
     AppstoreOutlined,
     ProfileOutlined,
     LogoutOutlined,
+    TagOutlined,
 } from '@ant-design/icons';
 import { useAuth } from './AuthContext';
 import { useAppContext } from './AppContext';
@@ -56,6 +57,13 @@ const Navbar: React.FC = () => {
                         disabled={!lastBoardId}
                     >
                         Tasks
+                    </Menu.Item>
+                    <Menu.Item
+                        icon={<TagOutlined />}
+                        onClick={() => lastTeamId && navigate('/labels')}
+                        disabled={!lastTeamId}
+                    >
+                        Labels
                     </Menu.Item>
                     <Menu.Item icon={<LogoutOutlined />} onClick={handleLogout}>
                         Logout

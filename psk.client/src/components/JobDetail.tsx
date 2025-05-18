@@ -144,17 +144,6 @@ const JobDetail: React.FC<JobDetailProps> = ({ open, onCancel, job, labels, team
                         >
                             Save Labels
                         </Button>
-                        
-                        <DynamicForm
-                            formTitle="Create new label"
-                            schemaName="LabelCreate"
-                            apiUrl="label"
-                            type="post"
-                            neededData={{ teamId }}
-                            onSuccess={onSuccess}
-                            trigger={<Button style={{ marginRight: 10 }}>Create new label</Button>}
-                        />
-                        
                     </div>
                 </div>
             )

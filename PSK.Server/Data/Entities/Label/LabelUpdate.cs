@@ -15,9 +15,5 @@ namespace PSK.Server.Data.Entities
         [Metadata("prompt", "Background color")]
         [Metadata("colorPick", "true")]
         public string? BackgroundColor { get; set; }
-
-        [Metadata("ignore", "true")]
-        public Guid TeamId { get; set; }
-
     }
 }
