@@ -19,10 +19,16 @@ const TeamBoards = () => {
     const [team, setTeam] = useState<any>(null);
     const [loading, setLoading] = useState(true);
     const [membersVisible, setMembersVisible] = useState(false);
-    const [members, setMembers] = useState<any[]>([]); 
+    const [members, setMembers] = useState<any[]>([]);
     const [refreshMembersTrigger, setRefreshMembersTrigger] = useState(0);
     const [isCreator, setIsCreator] = useState(false);
     const { setLastBoardId } = useAppContext();
+    const [contributions, setContributions] = useState<{ totalJobs: number, contributions: any[] }>({
+        totalJobs: 0,
+        contributions: []
+    });
+    const [loadingContributions, setLoadingContributions] = useState(false);
+
 
     const fetchMembers = async () => {
         try {
@@ -107,7 +113,26 @@ const TeamBoards = () => {
         fetchTeam();
         fetchMembers();
 
+        const cached = localStorage.getItem(`team_${teamId}_contributions`);
+        if (cached) {
+            setContributions(JSON.parse(cached));
+        }
     }, [teamId, userId]);
+
+    const fetchContributions = async () => {
+        setLoadingContributions(true);
+        try {
+            const response = await api.get(`team/${teamId}/contributions`);
+            setContributions(response.data);
+            localStorage.setItem(`team_${teamId}_contributions`, JSON.stringify(response.data));
+            toast.success("Contributions refreshed");
+        } catch (error) {
+            toast.error("Failed to load contributions");
+            console.error('Contributions error:', error);
+        } finally {
+            setLoadingContributions(false);
+        }
+    };
 
     const handleInvitationSent = () => {
         setRefreshMembersTrigger(prev => prev + 1);
@@ -274,25 +299,18 @@ const TeamBoards = () => {
                                     }
                                 />
 
-                                    <Popconfirm
-                                        title="Delete Board"
-                                        description="Are you sure you want to delete this Board? This action cannot be undone, and will delete all jobs belonging to the board."
-                                        onConfirm={(e) => {
-                                            e.stopPropagation()
-                                            handleDeleteBoard(board.id)
-                                        }}
-                                        okText="Yes, Delete"
-                                        cancelText="Cancel"
-                                        okButtonProps={{ danger: true }}
-                                    >
-                                        <Button
-                                            danger
-                                            icon={<DeleteOutlined />}
-                                            size="small"
-                                            type="text"
-                                        >
-                                        </Button>
-                                    </Popconfirm>
+                                <Popconfirm
+                                    title="Delete Board"
+                                    description="Are you sure you want to delete this Board? This action cannot be undone, and will delete all jobs belonging to the board."
+                                    onConfirm={(e) => {
+                                        e.stopPropagation()
+                                        handleDeleteBoard(board.id)
+                                    }}
+                                    okText="Yes, Delete"
+                                    cancelText="Cancel"
+                                    okButtonProps={{ danger: true }}
+                                >
+                                </Popconfirm>
                             </div>
                         </div>
                     </List.Item>
@@ -304,6 +322,44 @@ const TeamBoards = () => {
                 )}
                 locale={{ emptyText: "No boards found. Create a new board to get started." }}
             />
+            <Card
+                title="Team Contributions"
+                extra={
+                    <Button onClick={fetchContributions} loading={loadingContributions}>
+                        Refresh
+                    </Button>
+                }
+                style={{ marginTop: 40 }}
+            >
+                <Table
+                    dataSource={contributions.contributions}
+                    rowKey="memberId"
+                    pagination={false}
+                    columns={[
+                        {
+                            title: 'Username',
+                            dataIndex: 'username',
+                            key: 'username'
+                        },
+                        {
+                            title: 'Completed Jobs',
+                            dataIndex: 'completedJobs',
+                            key: 'completedJobs'
+                        },
+                        {
+                            title: 'Contribution',
+                            key: 'contribution',
+                            render: (_, record) => {
+                                const percent = contributions.totalJobs > 0
+                                    ? Math.round((record.completedJobs / contributions.totalJobs) * 100)
+                                    : 0;
+                                return `${percent}%`;
+                            }
+                        }
+                    ]}
+                />
+            </Card>
+
 
             <Modal
                 title="Team Members"
