@@ -240,13 +240,23 @@ const BoardDetail = () => {
                 await api.delete(`job/${jobId}`);
                 toast.success("Job deleted successfully");
             } else if (newStatus) {
-                await api.patch(`job/${jobId}`, { status: newStatus });
+                const job = jobs.find(j => j.id === jobId);
+                await api.patch(`job/${jobId}`, {
+                    status: newStatus,
+                    version: job.version,
+                });
                 toast.success(`Job moved to ${newStatus} successfully`);
             }
             fetchBoardData();
         } catch (err) {
             message.error('Failed to update job');
         }
+    };
+    const updateJob = (updatedJob: any) => {
+        setJobs(prev =>
+            prev.map(job => (job.id === updatedJob.id ? updatedJob : job))
+        );
+        setSelectedJob(updatedJob);
     };
 
     useEffect(() => { fetchBoardData(); }, [boardId]);
@@ -297,6 +307,7 @@ const BoardDetail = () => {
                         teamId={board.teamId}
                         teamMembers={teamMembers}
                         onSuccess={fetchBoardData}
+                        updateJob={updateJob}
                     />
                 )}
             </DndProvider>

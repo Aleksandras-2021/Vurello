@@ -2,6 +2,8 @@
 
 using Microsoft.AspNetCore.Mvc;
 using System.Data.Common;
+using Microsoft.EntityFrameworkCore;
+using System.Text.Json;
 
 public class ExceptionHandlingMiddleware
 {
@@ -32,13 +34,17 @@ public class ExceptionHandlingMiddleware
         {
             await HandleExceptionAsync(context, ex, StatusCodes.Status404NotFound, "404 Not Found - Resource not found", ex.Message);
         }
+        catch (DbUpdateConcurrencyException ex)
+        {
+            await HandleExceptionAsync(context, ex, StatusCodes.Status409Conflict, "409 Conflict - Concurrency error", "The resource was modified by another user.");
+        }
         catch (DbException ex)
         {
             await HandleExceptionAsync(context, ex, StatusCodes.Status500InternalServerError, "500 Internal Server Error - Database error", "A database error occurred.");
         }
         catch (InvalidOperationException ex)
         {
-            await HandleExceptionAsync(context, ex, StatusCodes.Status409Conflict, "409 Conflict - Invalid operation", ex.Message);
+            await HandleExceptionAsync(context, ex, StatusCodes.Status500InternalServerError, "500 Internal Server Error - Invalid operation", ex.Message);
         }
         catch (NotSupportedException ex)
         {
@@ -62,6 +68,7 @@ public class ExceptionHandlingMiddleware
         _logger.LogWarning(logMessage);
 
         context.Response.StatusCode = statusCode;
+        context.Response.ContentType = "application/json";
 
         var problemDetails = new ProblemDetails
         {
@@ -71,10 +78,8 @@ public class ExceptionHandlingMiddleware
             Instance = context.Request.Path
         };
 
-        context.Response.ContentType = "application/json";
         await context.Response.WriteAsJsonAsync(problemDetails);
     }
-
 
     private string GetControllerAndAction(HttpContext context)
     {

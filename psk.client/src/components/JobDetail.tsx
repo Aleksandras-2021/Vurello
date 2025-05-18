@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { Modal, Tabs, Button, Input } from 'antd';
+import { Modal, Tabs, Button } from 'antd';
 import DynamicForm from '../components/DynamicForm';
 import { api } from "../components/API";
+import { RJSFSchema, UiSchema } from '@rjsf/utils';
+
 interface JobDetailProps {
     open: boolean;
     onCancel: () => void;
@@ -10,46 +12,52 @@ interface JobDetailProps {
     teamId: string;
     teamMembers: { value: string; label: string }[];
     onSuccess: () => void;
+    updateJob: (job: any) => void;
 }
 
-const JobDetail: React.FC<JobDetailProps> = ({ open, onCancel, job, labels, teamId, teamMembers, onSuccess }) => {
+const JobDetail: React.FC<JobDetailProps> = ({ open, onCancel, job, labels, teamId, teamMembers, onSuccess, updateJob }) => {
     const [activeTab, setActiveTab] = useState('1');
     const [boardId, setBoardId] = useState<string>("");
-    const [selectedLabels, setSelectedLabels] = useState<any[]>(job.labels || []);
-    const [searchTerm, setSearchTerm] = useState('');
 
     const handleTabChange = (key: string) => {
         setActiveTab(key);
     };
 
-    const toggleLabel = (label: any) => {
-        const exists = selectedLabels.find((l: any) => l.id === label.id);
-        if (exists) {
-            setSelectedLabels(prev => prev.filter(l => l.id !== label.id));
-        } else {
-            setSelectedLabels(prev => [...prev, label]);
-        }
-    };
-
-    const filteredLabels = labels.filter(
-        (label: any) =>
-            !selectedLabels.some((l: any) => l.id === label.id) &&
-            label.text.toLowerCase().includes(searchTerm.toLowerCase())
-    );
-
-    const saveSelectedLabels = async () => {
-        try {
-            await api.put(`job/${job.id}/labels`, selectedLabels.map((l: any) => l.id));
-            onSuccess();
-        } catch (err) {
-            console.error('Failed to update labels', err);
-        }
+    const handleConflictCancelled = (latestData?: any) => {
+        updateJob(latestData);
     };
 
     useEffect(() => {
         setBoardId(job.boardId);
-        console.log(job);
-    }, []);
+    }, [job]);
+
+    const labelSchema: RJSFSchema = {
+        $schema: 'http://json-schema.org/draft-07/schema#',
+        type: 'object',
+        required: ['labels'],
+        properties: {
+            labels: {
+                type: 'array',
+                items: {
+                    type: 'string',
+                },
+                uniqueItems: true,
+                default: [],
+            },
+        },
+    };
+
+    const labelUiSchema: UiSchema = {
+        labels: {
+            'ui:widget': 'labelSelection',
+            'ui:options': {
+                labels: labels,
+                label: false,
+            },
+            'ui:title': '',
+            'ui:classNames': 'hide-label',
+        },
+    };
 
     const tabItems = [
         {
@@ -63,10 +71,11 @@ const JobDetail: React.FC<JobDetailProps> = ({ open, onCancel, job, labels, team
                         apiUrl={`job/${job.id}`}
                         type="patch"
                         onSuccess={onSuccess}
-                        neededData={{ boardId }}
                         currentData={job}
                         dropdownOptions={teamMembers}
                         noModal={true}
+                        onCancelConflict={handleConflictCancelled}
+                        fetchCurrentData={() => api.get(`job/${job.id}`).then(res => res.data)}
                     />
                 </div>
             ),
@@ -76,78 +85,30 @@ const JobDetail: React.FC<JobDetailProps> = ({ open, onCancel, job, labels, team
             label: 'Labels',
             children: (
                 <div style={{ padding: 20 }}>
-        
-                    <div>
-                        <h4>Selected Labels</h4>
-                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: 16 }}>
-                            {selectedLabels.map(label => (
-                                <div
-                                    key={label.id}
-                                    onClick={() => toggleLabel(label)}
-                                    style={{
-                                        backgroundColor: label.backgroundColor,
-                                        color: label.textColor,
-                                        padding: '6px 12px',
-                                        borderRadius: 8,
-                                        cursor: 'pointer',
-                                        boxShadow: '0 0 4px rgba(0,0,0,0.1)',
-                                    }}
-                                >
-                                    {label.text}
-                                </div>
-                            ))}
-                        </div>
-                        {selectedLabels.length === 0 && (
-                            <div style={{ color: '#888' }}>No selected labels</div>
-                        )}
-                    </div>
-
-
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-                        <h4 style={{ margin: 0 }}>Unselected Labels</h4>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                            <Input.Search
-                                placeholder="Search unselected labels"
-                                value={searchTerm}
-                                onChange={e => setSearchTerm(e.target.value)}
-                                style={{ maxWidth: 300 }}
-                            />
-                        </div>
-                    </div>
-
-                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
-                        {filteredLabels.map(label => (
-                            <div
-                                key={label.id}
-                                onClick={() => toggleLabel(label)}
-                                style={{
-                                    backgroundColor: label.backgroundColor,
-                                    color: label.textColor,
-                                    padding: '6px 12px',
-                                    borderRadius: 8,
-                                    cursor: 'pointer',
-                                }}
-                            >
-                                {label.text}
-                            </div>
-                        ))}
-                        {filteredLabels.length === 0 && (
-                            <div style={{ color: '#888' }}>No matching labels</div>
-                        )}
-                    </div>
-
-                    <div style={{ marginTop: 20 }}>
-                        <Button
-                            type="primary"
-                            onClick={saveSelectedLabels}
-                            style={{ marginRight: 20 }}
-                        >
-                            Save Labels
-                        </Button>
-                    </div>
+                    <DynamicForm
+                        formTitle=""
+                        schema={labelSchema}
+                        uiSchema={labelUiSchema}
+                        apiUrl={`job/${job.id}/labels`}
+                        type="put"
+                        currentData={{
+                            labels: Array.isArray(job.labels) ? job.labels.map(l => l.id).filter(id => typeof id === 'string') : [],
+                            version: job.version
+                        }}
+                        onSuccess={onSuccess}
+                        noModal={true}
+                        fetchCurrentData={async () => {
+                            const latestJob = await api.get(`job/${job.id}`).then(res => res.data);
+                            return {
+                                labels: Array.isArray(latestJob.labels) ? latestJob.labels.map(l => l.id).filter(id => typeof id === 'string') : [],
+                                version: latestJob.version
+                            };
+                        }}
+                        onCancelConflict={handleConflictCancelled}
+                    />
                 </div>
-            )
-        }
+            ),
+        },
     ];
 
     return (

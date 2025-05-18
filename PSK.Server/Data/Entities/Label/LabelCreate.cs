@@ -6,6 +6,8 @@ namespace PSK.Server.Data.Entities
     public class LabelCreate
     {
         [Metadata("prompt", "Label text")]
+        [MinLength(3)]
+        [MaxLength(20)]
         [Required]
         public string Text { get; set; }
 

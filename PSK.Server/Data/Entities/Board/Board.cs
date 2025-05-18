@@ -9,6 +9,7 @@ namespace PSK.Server.Data.Entities
         public Guid TeamId { get; set; }
         public Team Team { get; set; }
         public ICollection<Job> Jobs { get; set; } = new List<Job>();
+        public uint Version { get; set; }
 
     }
 }

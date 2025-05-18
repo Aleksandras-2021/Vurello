@@ -31,11 +31,18 @@ namespace PSK.Controllers
             return Ok(allJobs);
         }
 
-        [HttpPut("{jobId}/labels")]
-        public async Task<IActionResult> UpdateLabels(Guid jobId, [FromBody] List<Guid> labelIds)
+        [HttpGet("{jobId}")]
+        public async Task<IActionResult> GetJobById(Guid jobId)
         {
             var job = await _jobService.GetSingleAsync(new GetJobByIdSpec(jobId));
-            await _jobService.UpdateLabels(job, labelIds);
+            return Ok(job);
+        }
+
+        [HttpPut("{jobId}/labels")]
+        public async Task<IActionResult> UpdateLabels(Guid jobId, [FromBody] UpdateLabels labels)
+        {
+            var job = await _jobService.GetSingleAsync(new GetJobByIdSpec(jobId));
+            await _jobService.UpdateLabels(job, labels);
 
             return Ok();
         }

@@ -85,6 +85,22 @@ const TeamBoards = () => {
         }
     };
 
+    const handleTeamConflictCancelled = (latestData?: any) => {
+        if (!latestData) return;
+        if (latestData) {
+            setTeam(latestData);
+        }
+    };
+    const handleBoardConflictCancelled = (latestBoard?: any) => {
+        if (!latestBoard) return;
+
+        const updatedBoards = team.boards.map((b: any) =>
+            b.id === latestBoard.id ? latestBoard : b
+        );
+
+        setTeam({ ...team, boards: updatedBoards });
+    };
+
     useEffect(() => {
         if (!teamId) return;
 
@@ -174,6 +190,8 @@ const TeamBoards = () => {
                             </Button>
                         }
                         currentData={team}
+                        fetchCurrentData={() => api.get(`team/${teamId}`).then(res => res.data)}
+                        onCancelConflict={handleTeamConflictCancelled}
                     />
 
                     {isCreator && (
@@ -242,7 +260,10 @@ const TeamBoards = () => {
                                     schemaName="BoardUpdate"
                                     apiUrl={`board/${board.id}`}
                                     type="patch"
+                                    currentData={board}
                                     onSuccess={fetchTeam}
+                                    fetchCurrentData={() => api.get(`team/${teamId}`).then(res => res.data.boards.find((b: any) => b.id === board.id))}
+                                    onCancelConflict={handleBoardConflictCancelled}
                                     trigger={
                                         <Button
                                             icon={<EditOutlined />}
@@ -251,8 +272,8 @@ const TeamBoards = () => {
                                             onClick={(e) => e.preventDefault()}
                                         />
                                     }
-                                    currentData={board}
                                 />
+
                                     <Popconfirm
                                         title="Delete Board"
                                         description="Are you sure you want to delete this Board? This action cannot be undone, and will delete all jobs belonging to the board."

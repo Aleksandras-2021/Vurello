@@ -110,6 +110,27 @@ namespace PSK.Server.Data
                 .HasMany(j => j.Jobs)
                 .WithMany(l => l.Labels);
 
+            modelBuilder.Entity<Team>()
+                .Property(t => t.Version)
+                .HasColumnName("xmin")
+                .IsRowVersion();
+
+            modelBuilder.Entity<Board>()
+                .Property(b => b.Version)
+                .HasColumnName("xmin")
+                .IsRowVersion();
+
+            modelBuilder.Entity<Job>()
+                .Property(j => j.Version)
+                .HasColumnName("xmin")
+                .IsRowVersion();
+
+            modelBuilder.Entity<Label>()
+                .Property(l => l.Version)
+                .HasColumnName("xmin")
+                .IsRowVersion();
+
+
             base.OnModelCreating(modelBuilder);
         }
 

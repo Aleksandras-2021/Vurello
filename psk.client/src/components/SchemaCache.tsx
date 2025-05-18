@@ -4,12 +4,14 @@ import { RJSFSchema } from '@rjsf/utils';
 interface SchemaCache {
     schemas: Record<string, RJSFSchema>;
     uiSchemas: Record<string, any>;
+    errorMessageMaps: Record<string, Record<string, Record<string, string>>>;
     isLoaded: boolean;
 }
 
 const schemaCache: SchemaCache = {
     schemas: {},
     uiSchemas: {},
+    errorMessageMaps: {},
     isLoaded: false
 };
 
@@ -46,6 +48,7 @@ export const loadAllSchemas = async (): Promise<void> => {
                 },
             };
 
+            const errorMessageMap: Record<string, Record<string, string>> = {};
             if (schema.properties) {
                 Object.entries(schema.properties).forEach(([key, value]: [string, any]) => {
                     if (value["x-ignore"] === "true") return;
@@ -78,14 +81,28 @@ export const loadAllSchemas = async (): Promise<void> => {
 
                     if (value["x-colorPick"] === "true") {
                         uiField["ui:widget"] = "colorPick";
+                        if (!value.default) {
+                            filteredSchema.properties[key].default = "#ffffff";
+                        }
                     }
 
                     uiSchema[key] = uiField;
+
+                    const fieldTitle = value["x-prompt"] || key;
+                    errorMessageMap[key] = {
+                        required: `${fieldTitle} is required`,
+                        minLength: `${fieldTitle} must have at least ${value.minLength || 0} characters`,
+                        maxLength: `${fieldTitle} cannot exceed ${value.maxLength || 0} characters`,
+                        format: `Please enter a valid ${fieldTitle.toLowerCase()}`,
+                        pattern: `${fieldTitle} has an invalid format`,
+                        enum: `Please select a valid option for ${fieldTitle.toLowerCase()}`
+                    };
                 });
             }
 
             schemaCache.schemas[schemaName] = filteredSchema;
             schemaCache.uiSchemas[schemaName] = uiSchema;
+            schemaCache.errorMessageMaps[schemaName] = errorMessageMap;
         });
 
         schemaCache.isLoaded = true;
@@ -101,6 +118,10 @@ export const getSchema = (schemaName: string): RJSFSchema | null => {
 
 export const getUiSchema = (schemaName: string): any => {
     return schemaCache.uiSchemas[schemaName] || {};
+};
+
+export const getErrorMessageMap = (schemaName: string): Record<string, Record<string, string>> => {
+    return schemaCache.errorMessageMaps[schemaName] || {};
 };
 
 export const isSchemaCacheLoaded = (): boolean => {

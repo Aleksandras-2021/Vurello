@@ -29,6 +29,11 @@ public class TeamService : GenericService<Team, TeamCreate, TeamUpdate>, ITeamSe
         AddUserToTeam(entity, user);
     }
 
+    public override async Task OnUpdatingAsync(Team entity, TeamUpdate update)
+    {
+        _repository.UpdateVersion(entity, update.Version);
+    }
+
     public override async Task<bool> AuthorizeAsync(Guid id, ClaimsPrincipal user)
     {
         var userId = _userContext.GetUserId(user).ToString();

@@ -16,6 +16,7 @@ interface Label {
     backgroundColor: string;
     teamId: string;
     jobs: any[];
+    version: number;
 }
 
 const Labels: React.FC = () => {
@@ -42,6 +43,20 @@ const Labels: React.FC = () => {
     useEffect(() => {
         fetchLabels();
     }, []);
+
+    const handleLabelConflictCancelled = (latestData?: any) => {
+        if (!latestData) return;
+
+        setLabels(prev =>
+            prev.map(label =>
+                label.id === latestData.id ? latestData : label
+            )
+        );
+
+        if (selectedLabel && selectedLabel.id === latestData.id) {
+            setSelectedLabel(latestData);
+        }
+    };
 
     const handleDeleteLabel = async (labelId: string) => {
         try {
@@ -146,6 +161,8 @@ const Labels: React.FC = () => {
                             />
                         }
                         currentData={record}
+                        fetchCurrentData={() => api.get(`label/${record.id}`).then(res => res.data)}
+                        onCancelConflict={handleLabelConflictCancelled}
                     />
                     <Popconfirm
                         title="Delete Label"

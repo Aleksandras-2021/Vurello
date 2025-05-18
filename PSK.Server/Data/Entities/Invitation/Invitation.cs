@@ -16,5 +16,6 @@ namespace PSK.Server.Data.Entities
          public User? Recipient { get; set; }
          public User? Sender { get; set; }
          public Team? Team { get; set; }
+
     }
 }

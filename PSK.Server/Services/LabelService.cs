@@ -15,6 +15,11 @@ namespace PSK.Server.Services
         {
             _labelRepository = repository;
         }
+        public override async Task OnUpdatingAsync(Label entity, LabelUpdate update)
+        {
+            _repository.UpdateVersion(entity, update.Version);
+        }
+
 
     }
 }
