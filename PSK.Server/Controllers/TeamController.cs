@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using PSK.Server.Data.Entities;
 using PSK.Server.Misc;
 using PSK.Server.Specifications.TeamSpecifications;
+using PSK.Server.Services;
 
 namespace PSK.Controllers
 {
@@ -73,15 +74,6 @@ namespace PSK.Controllers
             {
                 return BadRequest(e.Message);
             }
-        }
-        [HttpGet("{teamId}/contributions")]
-        public async Task<IActionResult> GetContributions(Guid teamId)
-        {
-            var team = await _teamService.GetSingleAsync(new GetTeamByIdSpec(teamId));
-
-            var contributionsDTO = _teamService.GetContributions(team);
-
-            return Ok(contributionsDTO);
         }
     }
 }

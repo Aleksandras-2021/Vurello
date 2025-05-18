@@ -9,8 +9,7 @@ namespace PSK.Server.Specifications.TeamSpecifications
         {
             Query.Where(t => t.Id == teamId)
                  .Include(t => t.Users)
-                 .Include(t => t.Boards)
-                 .ThenInclude(board => board.Jobs);
+                 .Include(t => t.Boards);
         }
     }
 }

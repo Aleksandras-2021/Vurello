@@ -1,7 +1,6 @@
 ﻿using System.Security.Claims;
 using Microsoft.AspNetCore.Identity;
 using PSK.Server.Data.Entities;
-using PSK.Server.DTOs;
 using PSK.Server.Misc;
 using PSK.Server.Specifications.TeamSpecifications;
 
@@ -9,7 +8,6 @@ public interface ITeamService : IGenericService<Team, TeamCreate, TeamUpdate>
 {
     void AddUserToTeam(Team team, User user);
     Task RemoveUserFromTeam(Guid teamId, Guid userId);
-    TeamContributionsDTO GetContributions(Team team);
 }
 
 public class TeamService : GenericService<Team, TeamCreate, TeamUpdate>, ITeamService
@@ -95,27 +93,5 @@ public class TeamService : GenericService<Team, TeamCreate, TeamUpdate>, ITeamSe
 
         team.Users.Remove(userInTeam);
         await _teamRepository.UpdateAsync(team);
-    }
-
-    public TeamContributionsDTO GetContributions(Team team)
-    {
-        if (team == null)
-            throw new KeyNotFoundException("Team not found");
-
-        int totalJobs = team.Boards
-            .Sum(board => board.Jobs.Count(job => job.Status == "Done"));
-
-        var contributionsDto = new TeamContributionsDTO
-        {
-            TotalJobs = totalJobs,
-            Contributions = team.Users.Select(member => new TeamContributionsDTO.ContributionDetails
-            {
-                MemberId = member.Id,
-                Username = member.UserName,
-                CompletedJobs = member.AssignedJobs.Count(job => job.Status == "Done")
-            }).ToList()
-        };
-
-        return contributionsDto;
     }
 }
