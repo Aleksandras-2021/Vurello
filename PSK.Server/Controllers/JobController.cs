@@ -93,6 +93,28 @@ namespace PSK.Controllers
                 return StatusCode(500, new { message = ex.Message });
             }
         }
+
+        [HttpPost("{jobId}/move-to-board/{targetBoardId}")]
+        public async Task<IActionResult> MoveJobToBoard(Guid jobId, Guid targetBoardId)
+        {
+            try
+            {
+                await _jobService.MoveJobToBoardAsync(jobId, targetBoardId);
+                return Ok(new { message = "Job moved to new board successfully" });
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(new { message = ex.Message });
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = ex.Message });
+            }
+        }
     }
 
     public class UpdateColumnOrderRequest

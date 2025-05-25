@@ -88,6 +88,10 @@ builder.Services.AddScoped<IJobService, JobService>();
 builder.Services.AddScoped<IInvitationService, InvitationService>();
 builder.Services.AddScoped<ILabelService, LabelService>();
 builder.Services.AddScoped<IBoardColumnService, BoardColumnService>();
+builder.Services.AddScoped<IGenericRepository<Job>, GenericRepository<Job>>();
+builder.Services.AddScoped<IGenericRepository<Board>, GenericRepository<Board>>();
+builder.Services.AddScoped<IGenericRepository<BoardColumn>, GenericRepository<BoardColumn>>();
+builder.Services.AddScoped<IJobService, JobService>();
 
 builder.Services.AddHttpContextAccessor();
 

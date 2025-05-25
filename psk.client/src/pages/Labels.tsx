@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { Button, Card, Table, Space, Typography, Input, Popconfirm, Modal, Tag, Spin } from 'antd';
-import { DeleteOutlined, PlusOutlined, EditOutlined, SearchOutlined } from '@ant-design/icons';
+import { Button, Card, Table, Space, Typography, Input, Popconfirm, Modal, Tag, Spin, Alert } from 'antd';
+import { DeleteOutlined, PlusOutlined, EditOutlined, SearchOutlined, ArrowLeftOutlined } from '@ant-design/icons';
 import { api } from '../components/API';
 import { toast } from 'react-toastify';
 import { useAppContext } from '../components/AppContext';
 import AppLayout from '../components/AppLayout';
 import DynamicForm from '../components/DynamicForm';
+import { Link, useNavigate } from 'react-router-dom';
 
 const { Title } = Typography;
 
@@ -15,6 +16,7 @@ interface Label {
     textColor: string;
     backgroundColor: string;
     teamId: string;
+    team?: { name: string };
     jobs: any[];
     version: number;
 }
@@ -25,12 +27,35 @@ const Labels: React.FC = () => {
     const [searchText, setSearchText] = useState('');
     const [jobsModalVisible, setJobsModalVisible] = useState(false);
     const [selectedLabel, setSelectedLabel] = useState<Label | null>(null);
+    const [currentTeam, setCurrentTeam] = useState<any>(null);
+    const [teamLoading, setTeamLoading] = useState(false);
     const { lastTeamId } = useAppContext();
+    const navigate = useNavigate();
+
+    const fetchCurrentTeam = async () => {
+        if (!lastTeamId) return;
+
+        try {
+            setTeamLoading(true);
+            const response = await api.get(`team/${lastTeamId}`);
+            setCurrentTeam(response.data);
+        } catch (error) {
+            console.error('Failed to fetch current team:', error);
+            toast.error('Failed to load team information');
+        } finally {
+            setTeamLoading(false);
+        }
+    };
 
     const fetchLabels = async () => {
+        if (!lastTeamId) {
+            setLoading(false);
+            return;
+        }
+
         try {
             setLoading(true);
-            const response = await api.get('label');
+            const response = await api.get(`label/team/${lastTeamId}`);
             setLabels(response.data);
         } catch (error) {
             console.error('Failed to fetch labels:', error);
@@ -41,21 +66,28 @@ const Labels: React.FC = () => {
     };
 
     useEffect(() => {
-        fetchLabels();
-    }, []);
+        if (lastTeamId) {
+            fetchCurrentTeam();
+            fetchLabels();
+        } else {
+            setLoading(false);
+        }
+    }, [lastTeamId]);
 
     const handleLabelCreated = (newLabel: Label) => {
         if (!newLabel) return;
 
-        setLabels(currentLabels => {
-            if (currentLabels.some(label => label.id === newLabel.id)) {
-                return currentLabels.map(label =>
-                    label.id === newLabel.id ? newLabel : label
-                );
-            } else {
-                return [...currentLabels, newLabel];
-            }
-        });
+        if (newLabel.teamId === lastTeamId) {
+            setLabels(currentLabels => {
+                if (currentLabels.some(label => label.id === newLabel.id)) {
+                    return currentLabels.map(label =>
+                        label.id === newLabel.id ? newLabel : label
+                    );
+                } else {
+                    return [...currentLabels, newLabel];
+                }
+            });
+        }
     };
 
     const handleLabelUpdated = (updatedLabel: Label) => {
@@ -123,6 +155,29 @@ const Labels: React.FC = () => {
         label.text.toLowerCase().includes(searchText.toLowerCase())
     );
 
+    if (!lastTeamId) {
+        return (
+            <AppLayout>
+                <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '60vh' }}>
+                    <Alert
+                        message="No Team Selected"
+                        description={
+                            <div>
+                                <p>Please select a team first to manage labels.</p>
+                                <Button type="primary" onClick={() => navigate('/teams')}>
+                                    Go to Teams
+                                </Button>
+                            </div>
+                        }
+                        type="info"
+                        showIcon
+                        style={{ maxWidth: 400 }}
+                    />
+                </div>
+            </AppLayout>
+        );
+    }
+
     const columns = [
         {
             title: 'Label',
@@ -170,9 +225,11 @@ const Labels: React.FC = () => {
             ),
         },
         {
-            title: 'Team',
-            dataIndex: ['team', 'name'],
-            key: 'teamName',
+            title: 'Jobs Count',
+            key: 'jobsCount',
+            render: (record: Label) => (
+                <span>{record.jobs?.length || 0}</span>
+            ),
         },
         {
             title: 'Actions',
@@ -182,8 +239,9 @@ const Labels: React.FC = () => {
                     <Button
                         type="link"
                         onClick={() => showJobsModal(record)}
+                        disabled={!record.jobs || record.jobs.length === 0}
                     >
-                        View Jobs
+                        View Jobs ({record.jobs?.length || 0})
                     </Button>
                     <DynamicForm
                         formTitle="Edit Label"
@@ -260,7 +318,21 @@ const Labels: React.FC = () => {
         <AppLayout>
             <div style={{ marginBottom: 24 }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-                    <Title level={2}>Label Management</Title>
+                    <div style={{ display: 'flex', alignItems: 'center' }}>
+                        <Link to={`/teams/${lastTeamId}`}>
+                            <Button type="text" icon={<ArrowLeftOutlined />} style={{ marginRight: 10 }}>
+                                Back to Team
+                            </Button>
+                        </Link>
+                        <Title level={2} style={{ margin: 0 }}>
+                            Label Management
+                            {currentTeam && (
+                                <span style={{ fontSize: '16px', fontWeight: 'normal', color: '#666', marginLeft: 8 }}>
+                                    - {currentTeam.name}
+                                </span>
+                            )}
+                        </Title>
+                    </div>
                     <div style={{ display: 'flex', gap: 16 }}>
                         <Input
                             placeholder="Search labels"
@@ -286,7 +358,7 @@ const Labels: React.FC = () => {
                     </div>
                 </div>
 
-                {loading ? (
+                {(loading || teamLoading) ? (
                     <div style={{ display: 'flex', justifyContent: 'center', padding: 100 }}>
                         <Spin size="large" />
                     </div>
@@ -296,7 +368,11 @@ const Labels: React.FC = () => {
                         columns={columns}
                         rowKey="id"
                         pagination={{ pageSize: 10 }}
-                        locale={{ emptyText: "No labels found. Create a new label to get started." }}
+                        locale={{
+                            emptyText: currentTeam
+                                ? `No labels found for ${currentTeam.name}. Create a new label to get started.`
+                                : "No labels found. Create a new label to get started."
+                        }}
                     />
                 )}
             </div>

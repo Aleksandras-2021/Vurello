@@ -11,6 +11,7 @@ public interface IJobService : IGenericService<Job, JobCreate, JobUpdate>
 {
     Task UpdateLabels(Job entity, UpdateLabels labels);
     Task MoveJobToColumnAsync(Guid jobId, Guid columnId);
+    Task MoveJobToBoardAsync(Guid jobId, Guid targetBoardId);
 }
 
 public class JobService : GenericService<Job, JobCreate, JobUpdate>, IJobService
@@ -18,13 +19,18 @@ public class JobService : GenericService<Job, JobCreate, JobUpdate>, IJobService
     private readonly IGenericRepository<Job> _jobRepository;
     private readonly ILabelService _labelService;
     private readonly IGenericRepository<BoardColumn> _columnRepository;
+    private readonly IGenericRepository<Board> _boardRepository;
 
-
-    public JobService(IGenericRepository<Job> repository, ILabelService labelService, IGenericRepository<BoardColumn> columnRepository) : base(repository)
+    public JobService(
+        IGenericRepository<Job> repository,
+        ILabelService labelService,
+        IGenericRepository<BoardColumn> columnRepository,
+        IGenericRepository<Board> boardRepository) : base(repository)
     {
         _jobRepository = repository;
         _columnRepository = columnRepository;
         _labelService = labelService;
+        _boardRepository = boardRepository;
     }
 
     public override async Task OnCreatingAsync(Job entity, JobCreate create)
@@ -119,6 +125,42 @@ public class JobService : GenericService<Job, JobCreate, JobUpdate>, IJobService
         _repository.UpdateVersion(entity, labels.Version);
         await _jobRepository.UpdateAsync(entity);
 
+    }
+
+    public async Task MoveJobToBoardAsync(Guid jobId, Guid targetBoardId)
+    {
+        var job = await _jobRepository.GetByIdAsync(jobId);
+        if (job == null)
+        {
+            throw new KeyNotFoundException("Job not found.");
+        }
+
+        var targetBoard = await _boardRepository.GetByIdAsync(targetBoardId);
+        if (targetBoard == null)
+        {
+            throw new KeyNotFoundException("Target board not found.");
+        }
+
+        if (job.BoardId == targetBoardId)
+        {
+            throw new InvalidOperationException("Job is already on the target board.");
+        }
+
+        var targetColumns = await _columnRepository.ListAsync(new GetBoardColumnsByBoardIdSpec(targetBoardId));
+        var defaultColumn = targetColumns.FirstOrDefault(c => c.Name.Equals("To Do", StringComparison.OrdinalIgnoreCase) && c.IsDefault)
+                           ?? targetColumns.OrderBy(c => c.Order).FirstOrDefault();
+
+        if (defaultColumn == null)
+        {
+            throw new InvalidOperationException("Target board has no available columns.");
+        }
+
+        job.BoardId = targetBoardId;
+        job.ColumnId = defaultColumn.Id;
+        job.Status = defaultColumn.Name;
+        job.ColumnPosition = 0;
+
+        await _jobRepository.UpdateAsync(job);
     }
 
 }

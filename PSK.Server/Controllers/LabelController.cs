@@ -34,5 +34,12 @@ namespace PSK.Server.Controllers
             var label = await _labelService.GetSingleAsync(new GetLabelByIdWithJobsSpec(id));
             return Ok(label);
         }
+
+        [HttpGet("team/{teamId}")]
+        public async Task<IActionResult> GetTeamLabels(Guid teamId)
+        {
+            var labels = await _labelService.GetAllAsync(new GetLabelsByTeamIdSpec(teamId));
+            return Ok(labels);
+        }
     }
 }

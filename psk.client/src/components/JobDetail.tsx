@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Modal, Tabs, Button } from 'antd';
+import { SwapOutlined } from '@ant-design/icons';
 import DynamicForm from '../components/DynamicForm';
+import MoveJobBoardModal from '../components/MoveJobBoardModal';
 import { api } from "../components/API";
 import { RJSFSchema, UiSchema } from '@rjsf/utils';
 
@@ -15,11 +17,21 @@ interface JobDetailProps {
     updateJob: (job: any) => void;
 }
 
-const JobDetail: React.FC<JobDetailProps> = ({ open, onCancel, job, labels, teamId, teamMembers, onSuccess, updateJob }) => {
+const JobDetail: React.FC<JobDetailProps> = ({
+    open,
+    onCancel,
+    job,
+    labels,
+    teamId,
+    teamMembers,
+    onSuccess,
+    updateJob
+}) => {
     const [activeTab, setActiveTab] = useState('1');
     const [boardId, setBoardId] = useState<string>("");
     const [columns, setColumns] = useState<any[]>([]);
     const [loading, setLoading] = useState(false);
+    const [moveModalVisible, setMoveModalVisible] = useState(false);
 
     const handleTabChange = (key: string) => {
         setActiveTab(key);
@@ -48,6 +60,12 @@ const JobDetail: React.FC<JobDetailProps> = ({ open, onCancel, job, labels, team
         }
     };
 
+    const handleMoveSuccess = () => {
+        setMoveModalVisible(false);
+        onSuccess();
+        onCancel();
+    };
+
     useEffect(() => {
         setBoardId(job.boardId);
         if (job.boardId) {
@@ -66,16 +84,16 @@ const JobDetail: React.FC<JobDetailProps> = ({ open, onCancel, job, labels, team
             setLoading(false);
         }
     };
+
     const columnOptions = columns.map(column => ({
         value: column.id,
         label: column.name
     }));
 
-
     const combinedDropdownOptions = {
         "Column": columnOptions,
         "Assigned Member": teamMembers
-    };;
+    };
 
     const labelSchema: RJSFSchema = {
         $schema: 'http://json-schema.org/draft-07/schema#',
@@ -110,23 +128,23 @@ const JobDetail: React.FC<JobDetailProps> = ({ open, onCancel, job, labels, team
             key: '1',
             label: 'Info',
             children: (
-                <div style={{ padding: 20 }} >
-                {loading ? (
-                    <div>Loading...</div>
-                ) : (
-                    <DynamicForm
-                        formTitle={`Job: ${job.name}`}
-                        schemaName="JobUpdate"
-                        apiUrl={`job/${job.id}`}
-                        type="patch"
-                        onSuccess={handleJobUpdated} 
-                        currentData={job}
-                        dropdownOptions={combinedDropdownOptions}  
-                        noModal={true}
-                        onCancelConflict={handleConflictCancelled}
-                        fetchCurrentData={() => api.get(`job/${job.id}`).then(res => res.data)}
-                    />
-                )}
+                <div style={{ padding: 20 }}>
+                    {loading ? (
+                        <div>Loading...</div>
+                    ) : (
+                        <DynamicForm
+                            formTitle={`Job: ${job.name}`}
+                            schemaName="JobUpdate"
+                            apiUrl={`job/${job.id}`}
+                            type="patch"
+                            onSuccess={handleJobUpdated}
+                            currentData={job}
+                            dropdownOptions={combinedDropdownOptions}
+                            noModal={true}
+                            onCancelConflict={handleConflictCancelled}
+                            fetchCurrentData={() => api.get(`job/${job.id}`).then(res => res.data)}
+                        />
+                    )}
                 </div>
             ),
         },
@@ -162,40 +180,69 @@ const JobDetail: React.FC<JobDetailProps> = ({ open, onCancel, job, labels, team
     ];
 
     return (
-        <Modal
-            open={open}
-            onCancel={onCancel}
-            footer={null}
-            width={800}
-            style={{ top: 20 }}
-        >
-            <div style={{ display: 'flex', height: '70vh' }}>
-                <div style={{ minWidth: 120, borderRight: '1px solid #f0f0f0' }}>
-                    <Tabs
-                        tabPosition="left"
-                        activeKey={activeTab}
-                        onChange={handleTabChange}
-                        items={tabItems.map(({ key, label }) => ({ key, label }))}
-                        tabBarGutter={0}
-                        tabBarStyle={{ fontSize: '16px', fontWeight: 500 }}
-                    />
+        <>
+            <Modal
+                open={open}
+                onCancel={onCancel}
+                footer={null}
+                width={800}
+                style={{ top: 20 }}
+                extra={
+                    <Button
+                        icon={<SwapOutlined />}
+                        onClick={() => setMoveModalVisible(true)}
+                        style={{ marginLeft: 8 }}
+                    >
+                        Move to Board
+                    </Button>
+                }
+            >
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+                    <h2 style={{ margin: 0 }}>Job Details</h2>
+                    <Button
+                        icon={<SwapOutlined />}
+                        onClick={() => setMoveModalVisible(true)}
+                    >
+                        Move to Board
+                    </Button>
                 </div>
-                <div style={{ flex: 1, overflowY: 'auto', padding: '16px' }}>
-                    {tabItems.map(tab => (
-                        <div
-                            key={tab.key}
-                            style={{
-                                display: activeTab === tab.key ? 'block' : 'none',
-                                visibility: activeTab === tab.key ? 'visible' : 'hidden',
-                            }}
-                        >
-                            {tab.children}
-                        </div>
-                    ))}
+
+                <div style={{ display: 'flex', height: '70vh' }}>
+                    <div style={{ minWidth: 120, borderRight: '1px solid #f0f0f0' }}>
+                        <Tabs
+                            tabPosition="left"
+                            activeKey={activeTab}
+                            onChange={handleTabChange}
+                            items={tabItems.map(({ key, label }) => ({ key, label }))}
+                            tabBarGutter={0}
+                            tabBarStyle={{ fontSize: '16px', fontWeight: 500 }}
+                        />
+                    </div>
+                    <div style={{ flex: 1, overflowY: 'auto', padding: '16px' }}>
+                        {tabItems.map(tab => (
+                            <div
+                                key={tab.key}
+                                style={{
+                                    display: activeTab === tab.key ? 'block' : 'none',
+                                    visibility: activeTab === tab.key ? 'visible' : 'hidden',
+                                }}
+                            >
+                                {tab.children}
+                            </div>
+                        ))}
+                    </div>
                 </div>
-            </div>
-        </Modal>
+            </Modal>
+
+            <MoveJobBoardModal
+                open={moveModalVisible}
+                onCancel={() => setMoveModalVisible(false)}
+                job={job}
+                currentTeamId={teamId}
+                onSuccess={handleMoveSuccess}
+            />
+        </>
     );
 };
 
-export default JobDetail;  
+export default JobDetail;
