@@ -1,8 +1,14 @@
-﻿using Ardalis.Specification.EntityFrameworkCore;
+﻿using Ardalis.Specification;
+using Ardalis.Specification.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using PSK.Server.Data;
 
-public class GenericRepository<T> : RepositoryBase<T> where T : class
+public interface IGenericRepository<T> : IRepositoryBase<T> where T : class
+{
+    void UpdateVersion(T entity, uint version);
+}
+
+public class GenericRepository<T> : RepositoryBase<T>, IGenericRepository<T> where T : class
 {
     private readonly AppDbContext dbContext;
 
@@ -10,6 +16,7 @@ public class GenericRepository<T> : RepositoryBase<T> where T : class
     {
         this.dbContext = dbContext;
     }
+
     public void UpdateVersion(T entity, uint version)
     {
         var entry = dbContext.Entry(entity);

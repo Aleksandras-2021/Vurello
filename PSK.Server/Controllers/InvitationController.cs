@@ -1,5 +1,4 @@
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using PSK.Server.Data.Entities;
 using PSK.Server.Misc;
@@ -15,24 +14,12 @@ namespace PSK.Server.Controllers;
 public class InvitationController : GenericController<Invitation, InvitationCreate, InvitationUpdate>
 {
     private readonly IInvitationService _invitationService;
-    private readonly ITeamService _teamService;
     private readonly IUserContext _userContext;
-    private readonly UserManager<User> _userManager;
-    private readonly GenericRepository<Team> _teamRepository;
 
-    public InvitationController(
-        IInvitationService invitationService,
-        ITeamService teamService,
-        IUserContext userContext,
-        UserManager<User> userManager,
-        GenericRepository<Team> teamRepository)
-        : base(invitationService)
+    public InvitationController(IInvitationService invitationService, IUserContext userContext) : base(invitationService)
     {
         _invitationService = invitationService;
-        _teamService = teamService;
         _userContext = userContext;
-        _userManager = userManager;
-        _teamRepository = teamRepository;
     }
 
     [HttpGet("inbox")]

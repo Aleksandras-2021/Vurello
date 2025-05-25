@@ -5,6 +5,7 @@ using PSK.Server.Specifications.JobSpecifications;
 using PSK.Server.Specifications.LabelSpecifications;
 using PSK.Server.Specifications.BoardColumnSpecifications;
 using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
+using Microsoft.EntityFrameworkCore.Metadata.Internal;
 
 public interface IJobService : IGenericService<Job, JobCreate, JobUpdate>
 {
@@ -14,14 +15,12 @@ public interface IJobService : IGenericService<Job, JobCreate, JobUpdate>
 
 public class JobService : GenericService<Job, JobCreate, JobUpdate>, IJobService
 {
-    private readonly GenericRepository<Job> _jobRepository;
-    private readonly GenericRepository<BoardColumn> _columnRepository;
+    private readonly IGenericRepository<Job> _jobRepository;
     private readonly ILabelService _labelService;
+    private readonly IGenericRepository<BoardColumn> _columnRepository;
 
-    public JobService(
-        GenericRepository<Job> repository,
-        GenericRepository<BoardColumn> columnRepository,
-        ILabelService labelService) : base(repository)
+
+    public JobService(IGenericRepository<Job> repository, ILabelService labelService, IGenericRepository<BoardColumn> columnRepository) : base(repository)
     {
         _jobRepository = repository;
         _columnRepository = columnRepository;
@@ -42,7 +41,7 @@ public class JobService : GenericService<Job, JobCreate, JobUpdate>, IJobService
             }
             else
             {
-                entity.Status = "To Do"; 
+                entity.Status = "To Do";
             }
         }
         else
@@ -119,6 +118,7 @@ public class JobService : GenericService<Job, JobCreate, JobUpdate>, IJobService
 
         _repository.UpdateVersion(entity, labels.Version);
         await _jobRepository.UpdateAsync(entity);
+
     }
 
 }

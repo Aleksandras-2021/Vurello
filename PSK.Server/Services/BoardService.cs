@@ -9,7 +9,7 @@ public class BoardService : GenericService<Board, BoardCreate, BoardUpdate>, IBo
 {
     private readonly IBoardColumnService _columnService;
 
-    public BoardService(GenericRepository<Board> repository, IBoardColumnService columnService) : base(repository)
+    public BoardService(IGenericRepository<Board> repository, IBoardColumnService columnService) : base(repository)
     {
         _columnService = columnService;
     }
@@ -29,7 +29,6 @@ public class BoardService : GenericService<Board, BoardCreate, BoardUpdate>, IBo
 
         return board;
     }
-
     public override async Task OnUpdatingAsync(Board entity, BoardUpdate update)
     {
         _repository.UpdateVersion(entity, update.Version);

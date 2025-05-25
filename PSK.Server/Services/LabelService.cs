@@ -9,9 +9,9 @@ namespace PSK.Server.Services
 
     public class LabelService : GenericService<Label, LabelCreate, LabelUpdate>, ILabelService
     {
-        private readonly GenericRepository<Label> _labelRepository;
+        private readonly IGenericRepository<Label> _labelRepository;
 
-        public LabelService(GenericRepository<Label> repository) : base(repository)
+        public LabelService(IGenericRepository<Label> repository) : base(repository)
         {
             _labelRepository = repository;
         }

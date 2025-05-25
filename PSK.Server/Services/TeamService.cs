@@ -15,10 +15,10 @@ public interface ITeamService : IGenericService<Team, TeamCreate, TeamUpdate>
 public class TeamService : GenericService<Team, TeamCreate, TeamUpdate>, ITeamService
 {
     private readonly IUserContext _userContext;
-    private readonly GenericRepository<Team> _teamRepository;
+    private readonly IGenericRepository<Team> _teamRepository;
     private readonly UserManager<User> _userManager;
 
-    public TeamService(GenericRepository<Team> repository, IUserContext userContext, UserManager<User> userManager) : base(repository)
+    public TeamService(IGenericRepository<Team> repository, IUserContext userContext, UserManager<User> userManager) : base(repository)
     {
         _teamRepository = repository;
         _userContext = userContext;

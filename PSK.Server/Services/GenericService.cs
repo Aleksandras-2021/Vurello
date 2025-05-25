@@ -27,9 +27,9 @@ public class GenericService<TEntity, TCreate, TUpdate> : IGenericService<TEntity
     where TCreate : class
     where TUpdate : class
 {
-    protected readonly GenericRepository<TEntity> _repository;
+    protected readonly IGenericRepository<TEntity> _repository;
 
-    public GenericService(GenericRepository<TEntity> repository)
+    public GenericService(IGenericRepository<TEntity> repository)
     {
         _repository = repository;
     }

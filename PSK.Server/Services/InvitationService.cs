@@ -20,7 +20,7 @@ public class InvitationService : GenericService<Invitation, InvitationCreate, In
     private readonly ITeamService _teamService;
 
     public InvitationService(
-        GenericRepository<Invitation> repository,
+        IGenericRepository<Invitation> repository,
         UserManager<User> userManager,
         IUserContext userContext,
         IHttpContextAccessor httpContextAccessor,
@@ -77,7 +77,7 @@ public class InvitationService : GenericService<Invitation, InvitationCreate, In
     }
     public override async Task OnUpdatingAsync(Invitation entity, InvitationUpdate update)
     {
-        if(update.IsAccepted != null && update.IsAccepted == true)
+        if (update.IsAccepted != null && update.IsAccepted == true)
         {
             var userId = _userContext.GetUserId(_httpContextAccessor.HttpContext.User);
             var user = await _userManager.FindByIdAsync(userId.ToString());

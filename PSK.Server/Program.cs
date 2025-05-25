@@ -14,6 +14,8 @@ using Autofac;
 using Autofac.Extras.DynamicProxy;
 using PSK.Server.Interceptors;
 using Microsoft.Extensions.Options;
+using PSK.Server.Repository;
+using Autofac.Core;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -24,7 +26,7 @@ builder.Services.AddControllers()
     .AddJsonOptions(options =>
     {
         options.JsonSerializerOptions.ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles;
-    }); 
+    });
 
 
 builder.Services.AddEndpointsApiExplorer();
@@ -59,7 +61,26 @@ builder.Services.AddSwaggerGen(c =>
     });
 });
 
-builder.Services.AddScoped(typeof(GenericRepository<>));
+var cachingDecoratorOptions = builder.Configuration.GetSection("CachingDecorator")
+    .Get<CachingDecoratorOptions>() ?? new CachingDecoratorOptions { Enabled = false };
+
+builder.Host.ConfigureContainer<ContainerBuilder>(containerBuilder =>
+{
+
+    containerBuilder.RegisterGeneric(typeof(GenericRepository<>))
+        .As(typeof(IGenericRepository<>))
+        .InstancePerLifetimeScope();
+    if (cachingDecoratorOptions.Enabled)
+    {
+
+        containerBuilder.RegisterGenericDecorator(
+            typeof(CachingGenericRepository<>),
+            typeof(IGenericRepository<>)
+        );
+    }
+
+});
+
 builder.Services.AddScoped<IUserContext, UserContext>();
 builder.Services.AddScoped<IBoardService, BoardService>();
 builder.Services.AddScoped<ITeamService, TeamService>();
@@ -69,6 +90,7 @@ builder.Services.AddScoped<ILabelService, LabelService>();
 builder.Services.AddScoped<IBoardColumnService, BoardColumnService>();
 
 builder.Services.AddHttpContextAccessor();
+
 
 //Logging Interceptor
 builder.Services.Configure<LoggingInterceptorOptions>(
@@ -145,6 +167,8 @@ builder.Services.AddCors(options =>
     });
 });
 
+builder.Services.AddMemoryCache();
+
 TypeAdapterConfig.GlobalSettings.Default.IgnoreNullValues(true);
 
 TypeAdapterConfig<Guid?, Guid?>.NewConfig()
@@ -164,11 +188,11 @@ if (app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 
 app.UseCors("AllowAll");
+app.UseMiddleware<ExceptionHandlingMiddleware>();
 
 app.UseAuthentication();
 app.UseAuthorization();
 
-app.UseMiddleware<ExceptionHandlingMiddleware>();
 
 
 app.MapControllers();
