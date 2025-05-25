@@ -29,6 +29,31 @@ namespace PSK.Controllers
             var board = await _boardService.GetSingleAsync(new GetBoardByIdSpec(id));
             return Ok(board);
         }
-    }
 
+        [HttpPost("with-columns")]
+        public async Task<IActionResult> CreateWithColumns([FromBody] BoardCreate create)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+            var isAuthorized = await _boardService.AuthorizeAsync(create, User);
+
+            if (!isAuthorized)
+            {
+                return Forbid();
+            }
+
+            await _boardService.CreateBoardWithDefaultColumnsAsync(create);
+            return NoContent();
+        }
+
+        [ApiExplorerSettings(IgnoreApi = true)]
+        [NonAction]
+        public new Task<IActionResult> Create([FromBody] BoardCreate create)
+        {
+            return CreateWithColumns(create);
+        }
+    }
 }

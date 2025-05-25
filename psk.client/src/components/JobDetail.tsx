@@ -18,6 +18,8 @@ interface JobDetailProps {
 const JobDetail: React.FC<JobDetailProps> = ({ open, onCancel, job, labels, teamId, teamMembers, onSuccess, updateJob }) => {
     const [activeTab, setActiveTab] = useState('1');
     const [boardId, setBoardId] = useState<string>("");
+    const [columns, setColumns] = useState<any[]>([]);
+    const [loading, setLoading] = useState(false);
 
     const handleTabChange = (key: string) => {
         setActiveTab(key);
@@ -48,7 +50,32 @@ const JobDetail: React.FC<JobDetailProps> = ({ open, onCancel, job, labels, team
 
     useEffect(() => {
         setBoardId(job.boardId);
+        if (job.boardId) {
+            fetchBoardColumns(job.boardId);
+        }
     }, [job]);
+
+    const fetchBoardColumns = async (boardId: string) => {
+        setLoading(true);
+        try {
+            const columnsResponse = await api.get(`board-column/board/${boardId}`);
+            setColumns(columnsResponse.data);
+        } catch (error) {
+            console.error('Failed to fetch board columns:', error);
+        } finally {
+            setLoading(false);
+        }
+    };
+    const columnOptions = columns.map(column => ({
+        value: column.id,
+        label: column.name
+    }));
+
+
+    const combinedDropdownOptions = {
+        "Column": columnOptions,
+        "Assigned Member": teamMembers
+    };;
 
     const labelSchema: RJSFSchema = {
         $schema: 'http://json-schema.org/draft-07/schema#',
@@ -84,18 +111,22 @@ const JobDetail: React.FC<JobDetailProps> = ({ open, onCancel, job, labels, team
             label: 'Info',
             children: (
                 <div style={{ padding: 20 }} >
+                {loading ? (
+                    <div>Loading...</div>
+                ) : (
                     <DynamicForm
                         formTitle={`Job: ${job.name}`}
                         schemaName="JobUpdate"
                         apiUrl={`job/${job.id}`}
                         type="patch"
-                        onSuccess={handleJobUpdated}
+                        onSuccess={handleJobUpdated} 
                         currentData={job}
-                        dropdownOptions={teamMembers}
+                        dropdownOptions={combinedDropdownOptions}  
                         noModal={true}
                         onCancelConflict={handleConflictCancelled}
                         fetchCurrentData={() => api.get(`job/${job.id}`).then(res => res.data)}
                     />
+                )}
                 </div>
             ),
         },
@@ -167,4 +198,4 @@ const JobDetail: React.FC<JobDetailProps> = ({ open, onCancel, job, labels, team
     );
 };
 
-export default JobDetail;
+export default JobDetail;  

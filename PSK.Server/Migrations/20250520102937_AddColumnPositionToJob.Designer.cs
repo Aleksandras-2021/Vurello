@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using PSK.Server.Data;
@@ -11,9 +12,11 @@ using PSK.Server.Data;
 namespace PSK.Server.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250520102937_AddColumnPositionToJob")]
+    partial class AddColumnPositionToJob
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -194,39 +197,6 @@ namespace PSK.Server.Migrations
                     b.ToTable("Boards");
                 });
 
-            modelBuilder.Entity("PSK.Server.Data.Entities.BoardColumn", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<Guid>("BoardId")
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("Color")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<bool>("IsDefault")
-                        .HasColumnType("boolean");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<int>("Order")
-                        .HasColumnType("integer");
-
-                    b.Property<long>("Version")
-                        .HasColumnType("bigint");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("BoardId");
-
-                    b.ToTable("BoardColumn");
-                });
-
             modelBuilder.Entity("PSK.Server.Data.Entities.Invitation", b =>
                 {
                     b.Property<Guid>("Id")
@@ -276,9 +246,6 @@ namespace PSK.Server.Migrations
                     b.Property<Guid>("BoardId")
                         .HasColumnType("uuid");
 
-                    b.Property<Guid?>("ColumnId")
-                        .HasColumnType("uuid");
-
                     b.Property<int>("ColumnPosition")
                         .HasColumnType("integer");
 
@@ -307,8 +274,6 @@ namespace PSK.Server.Migrations
                     b.HasIndex("AssignedMemberId");
 
                     b.HasIndex("BoardId");
-
-                    b.HasIndex("ColumnId");
 
                     b.ToTable("Jobs");
                 });
@@ -532,17 +497,6 @@ namespace PSK.Server.Migrations
                     b.Navigation("Team");
                 });
 
-            modelBuilder.Entity("PSK.Server.Data.Entities.BoardColumn", b =>
-                {
-                    b.HasOne("PSK.Server.Data.Entities.Board", "Board")
-                        .WithMany("Columns")
-                        .HasForeignKey("BoardId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Board");
-                });
-
             modelBuilder.Entity("PSK.Server.Data.Entities.Invitation", b =>
                 {
                     b.HasOne("PSK.Server.Data.Entities.User", "Recipient")
@@ -582,15 +536,9 @@ namespace PSK.Server.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("PSK.Server.Data.Entities.BoardColumn", "Column")
-                        .WithMany("Jobs")
-                        .HasForeignKey("ColumnId");
-
                     b.Navigation("AssignedMember");
 
                     b.Navigation("Board");
-
-                    b.Navigation("Column");
                 });
 
             modelBuilder.Entity("PSK.Server.Data.Entities.Label", b =>
@@ -630,13 +578,6 @@ namespace PSK.Server.Migrations
                 });
 
             modelBuilder.Entity("PSK.Server.Data.Entities.Board", b =>
-                {
-                    b.Navigation("Columns");
-
-                    b.Navigation("Jobs");
-                });
-
-            modelBuilder.Entity("PSK.Server.Data.Entities.BoardColumn", b =>
                 {
                     b.Navigation("Jobs");
                 });

@@ -16,8 +16,11 @@ namespace PSK.Server.Data.Entities
         [Metadata("richText", "true")]
         public string? Description { get; set; }
 
-        [Metadata("prompt", "Job status")]
-        [Metadata("enum", "To Do,In Progress,Done")]
+        [Metadata("prompt", "Column")]
+        [Metadata("dropdown", "Column")]
+        public Guid? ColumnId { get; set; }
+
+        [Metadata("ignore", "true")]
         public string? Status { get; set; }
 
         [Metadata("prompt", "Deadline")]
@@ -30,6 +33,8 @@ namespace PSK.Server.Data.Entities
 
         [Metadata("ignore", "true")]
         public uint Version { get; set; }
+        [Metadata("ignore", "true")]
+        public int? ColumnPosition { get; set; }
 
 
     }

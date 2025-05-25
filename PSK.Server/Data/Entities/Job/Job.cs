@@ -6,6 +6,8 @@
         public string Name { get; set; }
         public string? Description { get; set; }
         public string Status { get; set; }
+        public Guid? ColumnId { get; set; }
+        public BoardColumn? Column { get; set; }
         public DateTime? Deadline { get; set; }
         public Guid BoardId { get; set; }
         public Board Board { get; set; }
@@ -15,6 +17,8 @@
         public ICollection<Label> Labels { get; set; } = new List<Label>();
 
         public uint Version { get; set; }
+        public int ColumnPosition { get; set; } = 0;
+
 
     }
 }

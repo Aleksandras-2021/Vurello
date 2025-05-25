@@ -34,7 +34,7 @@ interface DynamicFormProps {
     trigger?: ReactElement<Partial<ButtonProps> & { onClick?: () => void }>;
     noModal?: boolean;
     currentData?: Record<string, any>;
-    dropdownOptions?: { value: string; label: string }[];
+    dropdownOptions?: Record<string, Array<{ value: string; label: string }>>;
     onCancelConflict?: (updatedData?: Record<string, any>) => void;
     fetchCurrentData?: () => Promise<Record<string, any>>;
 }
@@ -105,8 +105,13 @@ const DynamicForm: React.FC<DynamicFormProps> = ({
                 if (dropdownOptions && clonedSchema.properties) {
                     Object.entries(clonedSchema.properties).forEach(([key, value]: [string, any]) => {
                         if (value["x-dropdown"]) {
-                            clonedSchema.properties[key].enum = dropdownOptions.map(option => option.value);
-                            clonedSchema.properties[key].enumNames = dropdownOptions.map(option => option.label);
+                            const dropdownType = value["x-dropdown"];
+                            const optionsForType = dropdownOptions[dropdownType];
+
+                            if (optionsForType) {
+                                clonedSchema.properties[key].enum = optionsForType.map(option => option.value);
+                                clonedSchema.properties[key].enumNames = optionsForType.map(option => option.label);
+                            }
                         }
                     });
                 }
