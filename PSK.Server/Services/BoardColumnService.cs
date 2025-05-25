@@ -13,14 +13,14 @@ public interface IBoardColumnService : IGenericService<BoardColumn, BoardColumnC
 
 public class BoardColumnService : GenericService<BoardColumn, BoardColumnCreate, BoardColumnUpdate>, IBoardColumnService
 {
-    private readonly GenericRepository<BoardColumn> _columnRepository;
-    private readonly GenericRepository<Job> _jobRepository;
-    private readonly GenericRepository<Board> _boardRepository;
+    private readonly IGenericRepository<BoardColumn> _columnRepository;
+    private readonly IGenericRepository<Job> _jobRepository;
+    private readonly IGenericRepository<Board> _boardRepository;
 
     public BoardColumnService(
-        GenericRepository<BoardColumn> repository,
-        GenericRepository<Job> jobRepository,
-        GenericRepository<Board> boardRepository) : base(repository)
+        IGenericRepository<BoardColumn> repository,
+        IGenericRepository<Job> jobRepository,
+        IGenericRepository<Board> boardRepository) : base(repository)
     {
         _columnRepository = repository;
         _jobRepository = jobRepository;
