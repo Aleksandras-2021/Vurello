@@ -259,6 +259,44 @@ const BoardDetail = () => {
         setSelectedJob(updatedJob);
     };
 
+    const handleJobCreated = (newJob: any) => {
+        if (!newJob) return;
+
+        setJobs(currentJobs => {
+            // Check if job already exists
+            if (currentJobs.some(job => job.id === newJob.id)) {
+                return currentJobs.map(job =>
+                    job.id === newJob.id ? newJob : job
+                );
+            } else {
+                return [...currentJobs, newJob];
+            }
+        });
+
+        // Update board data if necessary
+        if (board) {
+            setBoard({
+                ...board,
+                jobs: [...board.jobs, newJob]
+            });
+        }
+    };
+
+    const handleJobUpdated = (updatedJob: any) => {
+        if (!updatedJob) return;
+
+        setJobs(currentJobs =>
+            currentJobs.map(job => job.id === updatedJob.id ? updatedJob : job)
+        );
+
+        // If this job is selected, update it there too
+        if (selectedJob && selectedJob.id === updatedJob.id) {
+            setSelectedJob(updatedJob);
+        }
+    }; 
+    
+    
+
     useEffect(() => { fetchBoardData(); }, [boardId]);
     useEffect(() => { if (board?.teamId) fetchTeamMembers(); }, [board?.teamId]);
 
@@ -279,7 +317,7 @@ const BoardDetail = () => {
                         schemaName="JobCreate"
                         apiUrl="job"
                         type="post"
-                        onSuccess={fetchBoardData}
+                        onSuccess={handleJobCreated}
                         trigger={<Button type="primary" icon={<PlusOutlined />}>Create Job</Button>}
                         neededData={{ boardId }}
                         dropdownOptions={teamMembers}

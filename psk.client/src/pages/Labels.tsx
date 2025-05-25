@@ -44,6 +44,34 @@ const Labels: React.FC = () => {
         fetchLabels();
     }, []);
 
+    const handleLabelCreated = (newLabel: Label) => {
+        if (!newLabel) return;
+
+        setLabels(currentLabels => {
+            if (currentLabels.some(label => label.id === newLabel.id)) {
+                return currentLabels.map(label =>
+                    label.id === newLabel.id ? newLabel : label
+                );
+            } else {
+                return [...currentLabels, newLabel];
+            }
+        });
+    };
+
+    const handleLabelUpdated = (updatedLabel: Label) => {
+        if (!updatedLabel) return;
+
+        setLabels(currentLabels =>
+            currentLabels.map(label =>
+                label.id === updatedLabel.id ? updatedLabel : label
+            )
+        );
+
+        if (selectedLabel && selectedLabel.id === updatedLabel.id) {
+            setSelectedLabel(updatedLabel);
+        }
+    };
+
     const handleLabelConflictCancelled = (latestData?: any) => {
         if (!latestData) return;
 
@@ -61,8 +89,17 @@ const Labels: React.FC = () => {
     const handleDeleteLabel = async (labelId: string) => {
         try {
             await api.delete(`label/${labelId}`);
+
+            setLabels(currentLabels =>
+                currentLabels.filter(label => label.id !== labelId)
+            );
+
+            if (selectedLabel && selectedLabel.id === labelId) {
+                setSelectedLabel(null);
+                setJobsModalVisible(false);
+            }
+
             toast.success('Label deleted successfully');
-            fetchLabels();
         } catch (error) {
             console.error('Failed to delete label:', error);
             toast.error('Failed to delete label');
@@ -153,7 +190,7 @@ const Labels: React.FC = () => {
                         schemaName="LabelUpdate"
                         apiUrl={`label/${record.id}`}
                         type="patch"
-                        onSuccess={fetchLabels}
+                        onSuccess={handleLabelUpdated}
                         trigger={
                             <Button
                                 type="text"
@@ -239,7 +276,7 @@ const Labels: React.FC = () => {
                             apiUrl="label"
                             type="post"
                             neededData={{ teamId: lastTeamId }}
-                            onSuccess={fetchLabels}
+                            onSuccess={handleLabelCreated}
                             trigger={
                                 <Button type="primary" icon={<PlusOutlined />}>
                                     New Label

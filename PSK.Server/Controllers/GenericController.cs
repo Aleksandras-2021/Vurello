@@ -33,8 +33,8 @@ namespace PSK.Controllers
                 return Forbid();
             }
 
-            await _service.CreateAsync(create);
-            return NoContent();
+            var entity = await _service.CreateAsync(create);
+            return Ok(entity); 
         }
 
         [HttpPatch("{id}")]
@@ -58,7 +58,7 @@ namespace PSK.Controllers
                 return NotFound();
             }
 
-            return NoContent();
+            return Ok(updated); // Return the updated entity
         }
 
         [HttpDelete("{id}")]

@@ -7,26 +7,33 @@ import { useAuth } from '../components/AuthContext';
 import { api } from "../components/API"
 import { useAppContext } from '../components/AppContext';
 import AppLayout from '../components/AppLayout';
+import {EntityList} from "../components/EntityList.tsx";
+import { mergeEntities } from '../utils/stateHelpers.ts'; // Import our utility function
 
 const { Title } = Typography;
 
 const Teams = () => {
     const { userId } = useAuth();
-
     const [teams, setTeams] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const { setLastTeamId } = useAppContext();
 
     const fetchTeams = async () => {
         try {
-            const response = await api.get('team');;
+            setLoading(true);
+            const response = await api.get('team');
             setTeams(response.data);
-            console.log(response.data);
         } catch (error) {
             console.error('Failed to fetch teams:', error);
         } finally {
             setLoading(false);
         }
+    };
+
+    // Handle targeted updates when a team is created
+    const handleTeamCreated = (newTeam: any) => {
+        if (!newTeam) return;
+        setTeams(currentTeams => mergeEntities(currentTeams, newTeam));
     };
 
     useEffect(() => {
@@ -56,7 +63,7 @@ const Teams = () => {
                         schemaName="TeamCreate"
                         apiUrl="team"
                         type='post'
-                        onSuccess={fetchTeams}
+                        onSuccess={handleTeamCreated} // Pass our handler
                         trigger={
                             <Button type="primary" icon={<PlusOutlined />}>
                                 New Team

@@ -9,6 +9,7 @@ import { useAuth } from '../components/AuthContext';
 import { useAppContext } from '../components/AppContext';
 import AppLayout from '../components/AppLayout';
 import { EditOutlined } from '@ant-design/icons';
+import { mergeEntities} from "../utils/stateHelpers.ts";
 
 const { Title } = Typography;
 
@@ -139,6 +140,59 @@ const TeamBoards = () => {
         fetchMembers();
     };
 
+    const handleBoardCreated = (newBoard: any) => {
+        if (!newBoard) return;
+
+        setTeam(currentTeam => {
+            if (!currentTeam) return currentTeam;
+
+            const updatedBoards = [...(currentTeam.boards || [])];
+            const boardExists = updatedBoards.some(b => b.id === newBoard.id);
+
+            if (!boardExists) {
+                updatedBoards.push(newBoard);
+            }
+
+            return {
+                ...currentTeam,
+                boards: updatedBoards
+            };
+        });
+    };
+
+    const handleTeamUpdated = (updatedTeam: any) => {
+        if (!updatedTeam) return;
+
+        // Only update the team properties, preserve the existing boards
+        setTeam(currentTeam => {
+            if (!currentTeam) return updatedTeam;
+
+            return {
+                ...currentTeam,
+                ...updatedTeam,
+                // Preserve the boards that were already loaded
+                boards: currentTeam.boards || []
+            };
+        });
+    };
+
+    const handleBoardUpdated = (updatedBoard: any) => {
+        if (!updatedBoard) return;
+
+        setTeam(currentTeam => {
+            if (!currentTeam) return currentTeam;
+
+            const updatedBoards = currentTeam.boards.map(board =>
+                board.id === updatedBoard.id ? updatedBoard : board
+            );
+
+            return {
+                ...currentTeam,
+                boards: updatedBoards
+            };
+        });
+    };
+
     if (loading) {
         return <Spin size="large" />;
     }
@@ -208,7 +262,7 @@ const TeamBoards = () => {
                         schemaName="TeamUpdate"
                         apiUrl={`team/${teamId}`}
                         type='patch'
-                        onSuccess={fetchTeam}
+                        onSuccess={handleTeamUpdated}
                         trigger={
                             <Button style={{ marginRight: 10 }}>
                                 Edit Team
@@ -244,7 +298,7 @@ const TeamBoards = () => {
                         schemaName="BoardCreate"
                         apiUrl="board"
                         type='post'
-                        onSuccess={fetchTeam}
+                        onSuccess={handleBoardCreated}
                         trigger={
                             <Button type="primary" icon={<PlusOutlined />}>
                                 New Board
@@ -286,7 +340,7 @@ const TeamBoards = () => {
                                     apiUrl={`board/${board.id}`}
                                     type="patch"
                                     currentData={board}
-                                    onSuccess={fetchTeam}
+                                    onSuccess={handleBoardUpdated}
                                     fetchCurrentData={() => api.get(`team/${teamId}`).then(res => res.data.boards.find((b: any) => b.id === board.id))}
                                     onCancelConflict={handleBoardConflictCancelled}
                                     trigger={
@@ -322,11 +376,6 @@ const TeamBoards = () => {
                             </div>
                         </div>
                     </List.Item>
-
-
-
-
-
                 )}
                 locale={{ emptyText: "No boards found. Create a new board to get started." }}
             />
@@ -367,8 +416,6 @@ const TeamBoards = () => {
                     ]}
                 />
             </Card>
-
-
             <Modal
                 title="Team Members"
                 open={membersVisible}

@@ -176,13 +176,12 @@ const DynamicForm: React.FC<DynamicFormProps> = ({
                 ...neededData,
             };
 
-            console.log('Submitting payload:', fullData);
-
             const method = type === 'put' ? 'put' : type === 'patch' ? 'patch' : 'post';
             const response = await api[method](apiUrl, fullData);
+            const updatedEntity = response.data;
 
             toast.success(`${formTitle || 'Form'} ${type === 'patch' || type === 'put' ? 'updated' : 'created'} successfully`);
-            onSuccess?.(response.data);
+            onSuccess?.(updatedEntity);
             handleCloseModal();
         } catch (error: any) {
             if (error?.response?.status === 409) {

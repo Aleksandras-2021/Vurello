@@ -23,8 +23,27 @@ const JobDetail: React.FC<JobDetailProps> = ({ open, onCancel, job, labels, team
         setActiveTab(key);
     };
 
+    const handleJobUpdated = (updatedJob: any) => {
+        if (!updatedJob) return;
+        updateJob(updatedJob);
+    };
+
+    const handleLabelsUpdated = (response: any) => {
+        if (!response) return;
+
+        const updatedJob = {
+            ...job,
+            labels: response.labels || job.labels,
+            version: response.version
+        };
+
+        updateJob(updatedJob);
+    };
+
     const handleConflictCancelled = (latestData?: any) => {
-        updateJob(latestData);
+        if (latestData) {
+            updateJob(latestData);
+        }
     };
 
     useEffect(() => {
@@ -70,7 +89,7 @@ const JobDetail: React.FC<JobDetailProps> = ({ open, onCancel, job, labels, team
                         schemaName="JobUpdate"
                         apiUrl={`job/${job.id}`}
                         type="patch"
-                        onSuccess={onSuccess}
+                        onSuccess={handleJobUpdated}
                         currentData={job}
                         dropdownOptions={teamMembers}
                         noModal={true}
@@ -95,7 +114,7 @@ const JobDetail: React.FC<JobDetailProps> = ({ open, onCancel, job, labels, team
                             labels: Array.isArray(job.labels) ? job.labels.map(l => l.id).filter(id => typeof id === 'string') : [],
                             version: job.version
                         }}
-                        onSuccess={onSuccess}
+                        onSuccess={handleLabelsUpdated}
                         noModal={true}
                         fetchCurrentData={async () => {
                             const latestJob = await api.get(`job/${job.id}`).then(res => res.data);
