@@ -1,0 +1,86 @@
+:root {
+    --bg-primary: #ffffff;
+    --bg-secondary: #f5f5f5;
+    --text-primary: #000000;
+    --text-secondary: #666666;
+    --border-color: #d9d9d9;
+}
+
+.dark {
+    --bg-primary: #141414;
+    --bg-secondary: #1f1f1f;
+    --text-primary: #ffffff;
+    --text-secondary: #a0a0a0;
+    --border-color: #434343;
+}
+
+    .dark .ant-layout {
+        background: var(--bg-primary) !important;
+    }
+
+    .dark .ant-layout-sider {
+        background: var(--bg-secondary) !important;
+    }
+
+    .dark .ant-layout-header {
+        background: var(--bg-secondary) !important;
+        border-bottom: 1px solid var(--border-color) !important;
+    }
+
+    .dark .ant-menu {
+        background: var(--bg-secondary) !important;
+        border-right: 1px solid var(--border-color) !important;
+    }
+
+    .dark .ant-menu-item {
+        color: var(--text-primary) !important;
+    }
+
+        .dark .ant-menu-item:hover {
+            background-color: #2a2a2a !important;
+        }
+
+    .dark .ant-menu-item-disabled,
+    .dark .ant-menu-item-disabled > * {
+        color: rgba(255, 255, 255, 0.25) !important;
+        cursor: not-allowed !important;
+    }
+
+        .dark .ant-menu-item-disabled:hover {
+            background-color: transparent !important;
+            color: rgba(255, 255, 255, 0.25) !important;
+        }
+
+        .dark .ant-menu-item-disabled .anticon {
+            color: rgba(255, 255, 255, 0.25) !important;
+        }
+
+.ant-menu-item-disabled,
+.ant-menu-item-disabled > * {
+    color: rgba(0, 0, 0, 0.25) !important;
+    cursor: not-allowed !important;
+}
+
+    .ant-menu-item-disabled:hover {
+        background-color: transparent !important;
+        color: rgba(0, 0, 0, 0.25) !important;
+    }
+
+    .ant-menu-item-disabled .anticon {
+        color: rgba(0, 0, 0, 0.25) !important;
+    }
+
+.dark .tox-tinymce {
+    border: 1px solid var(--border-color) !important;
+}
+
+.dark .tox .tox-toolbar,
+.dark .tox .tox-toolbar__overflow,
+.dark .tox .tox-toolbar__primary {
+    background: var(--bg-secondary) !important;
+    border-color: var(--border-color) !important;
+}
+
+.dark .tox .tox-edit-area__iframe {
+    background: var(--bg-primary) !important;
+}

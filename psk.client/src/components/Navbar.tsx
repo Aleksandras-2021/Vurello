@@ -11,6 +11,7 @@ import {
 import { useAuth } from './AuthContext';
 import { useAppContext } from './AppContext';
 import UserInbox from './UserInbox';
+import ThemeToggle from './ThemeToggle';
 
 const { Header, Sider } = Layout;
 
@@ -88,7 +89,10 @@ const Navbar: React.FC = () => {
                 }}
             >
                 <p></p>
-                <UserInbox />
+                <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+                    <ThemeToggle />
+                    <UserInbox />
+                </div>
             </Header>
 
             <div
