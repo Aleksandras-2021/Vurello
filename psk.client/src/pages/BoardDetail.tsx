@@ -52,6 +52,39 @@ const formatDeadlineDate = (deadline) => {
     return `Due: ${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')} ${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
 };
 
+const calculateDaysLeft = (deadline) => {
+    if (!deadline) return null;
+
+    const deadlineDate = new Date(deadline);
+    const currentDate = new Date();
+
+    deadlineDate.setHours(0, 0, 0, 0);
+    currentDate.setHours(0, 0, 0, 0);
+
+    const timeDiff = deadlineDate.getTime() - currentDate.getTime();
+    const daysDiff = Math.ceil(timeDiff / (1000 * 3600 * 24));
+
+    return daysDiff;
+};
+
+const formatDaysLeft = (deadline) => {
+    if (!deadline) return '';
+
+    const daysLeft = calculateDaysLeft(deadline);
+
+    if (daysLeft === null) return '';
+
+    if (daysLeft > 0) {
+        return `(${daysLeft} day${daysLeft === 1 ? '' : 's'} left)`;
+    } else if (daysLeft === 0) {
+        return '(Due today)';
+    } else {
+        const daysOverdue = Math.abs(daysLeft);
+        return `(${daysOverdue} day${daysOverdue === 1 ? '' : 's'} overdue)`;
+    }
+};
+
+
 function getContrastColor(hexColor) {
     if (!hexColor || !hexColor.match(/^#[0-9A-F]{6}$/i)) {
         return '#000000';
@@ -142,12 +175,25 @@ const DraggableJobCard = ({ job, teamMembers, onDrop, boardId, setSelectedJob })
                 )}
 
                 {job.deadline && (
-                    <p>
-                        <ClockCircleOutlined style={{ marginRight: 8, color: overdue ? '#ff4d4f' : 'inherit' }} />
-                        <Text style={{ color: overdue ? '#ff4d4f' : 'inherit', fontWeight: overdue ? 'bold' : 'normal' }}>
-                            {deadlineText}
+                    <div style={{ marginTop: 12 }}>
+                        <div style={{ display: 'flex', alignItems: 'center' }}>
+                            <ClockCircleOutlined style={{ marginRight: 8, color: overdue ? '#ff4d4f' : 'inherit' }} />
+                            <Text style={{ color: overdue ? '#ff4d4f' : 'inherit', fontWeight: overdue ? 'bold' : 'normal' }}>
+                                {deadlineText}
+                            </Text>
+                        </div>
+                        <Text
+                            style={{
+                                color: overdue ? '#ff4d4f' : 'inherit',
+                                fontWeight: overdue ? 'bold' : 'normal',
+                                fontSize: '12px',
+                                marginLeft: '24px',
+                                display: 'block'
+                            }}
+                        >
+                            {formatDaysLeft(job.deadline)}
                         </Text>
-                    </p>
+                    </div>
                 )}
             </Card>
         </div>
