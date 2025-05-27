@@ -74,7 +74,7 @@ public class ExceptionHandlingMiddleware
         {
             Status = statusCode,
             Title = responseMessage,
-            Detail = ex.Message,
+            Detail = responseMessage,
             Instance = context.Request.Path
         };
 

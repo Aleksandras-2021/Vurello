@@ -15,6 +15,9 @@ namespace PSK.Server.Data.Entities
 
         public ICollection<User> Users { get; set; } = new List<User>();
         public ICollection<Label> Labels { get; set; } = new List<Label>();
+        public ICollection<Role> Roles { get; set; } = new List<Role>();
+
+        public ICollection<UserTeamRole> UserTeamRoles { get; set; } = new List<UserTeamRole>();
 
         public uint Version { get; set; }
 

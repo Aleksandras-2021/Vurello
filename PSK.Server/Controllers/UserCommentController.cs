@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using PSK.Server.Data.Entities.Comment;
 using PSK.Server.Services;
 using PSK.Server.Misc;
+using PSK.Server.Authorization;
 
 namespace PSK.Controllers
 {
@@ -21,13 +22,15 @@ namespace PSK.Controllers
         }
 
         [HttpGet("job/{jobId}")]
+        [BelongsToTeam]
         public async Task<IActionResult> GetCommentsForJob(Guid jobId)
         {
             var comments = await _commentService.GetCommentsByJobIdAsync(jobId);
             return Ok(comments);
         }
 
-        [HttpPost]
+        [HttpPost("{jobId}")]
+        [BelongsToTeam]
         public async Task<IActionResult> CreateComment([FromBody] UserCommentCreate commentDto)
         {
             if (!ModelState.IsValid)

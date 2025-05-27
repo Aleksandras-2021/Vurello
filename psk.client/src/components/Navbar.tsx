@@ -7,6 +7,8 @@ import {
     ProfileOutlined,
     LogoutOutlined,
     TagOutlined,
+    UserOutlined,
+    SafetyCertificateOutlined
 } from '@ant-design/icons';
 import { useAuth } from './AuthContext';
 import { useAppContext } from './AppContext';
@@ -65,6 +67,20 @@ const Navbar: React.FC = () => {
                         disabled={!lastTeamId}
                     >
                         Labels
+                    </Menu.Item>
+                    <Menu.Item
+                        icon={<UserOutlined />}
+                        onClick={() => lastTeamId && navigate('/users')}
+                        disabled={!lastTeamId}
+                    >
+                        Users
+                    </Menu.Item>
+                    <Menu.Item
+                        icon={<SafetyCertificateOutlined />}
+                        onClick={() => lastTeamId && navigate('/roles')}
+                        disabled={!lastTeamId}
+                    >
+                        Roles
                     </Menu.Item>
                     <Menu.Item icon={<LogoutOutlined />} onClick={handleLogout}>
                         Logout

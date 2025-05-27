@@ -2,14 +2,14 @@ import React, { useState, useEffect } from 'react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
 import DynamicForm from '../components/DynamicForm';
 import { Button, Spin, Modal, Table, Space, Typography, Card, Divider, Layout, Collapse, List, Popconfirm, message } from 'antd';
-import { ArrowLeftOutlined, PlusOutlined, UserOutlined, DeleteOutlined } from '@ant-design/icons';
+import { ArrowLeftOutlined, PlusOutlined, UserOutlined, DeleteOutlined, ReloadOutlined } from '@ant-design/icons';
 import { api } from '../components/API';
 import { toast } from 'react-toastify';
 import { useAuth } from '../components/AuthContext';
 import { useAppContext } from '../components/AppContext';
 import AppLayout from '../components/AppLayout';
 import { EditOutlined } from '@ant-design/icons';
-import { mergeEntities} from "../utils/stateHelpers.ts";
+import { mergeEntities } from "../utils/stateHelpers.ts";
 
 const { Title } = Typography;
 
@@ -19,103 +19,31 @@ const TeamBoards = () => {
     const { userId } = useAuth();
     const [team, setTeam] = useState<any>(null);
     const [loading, setLoading] = useState(true);
-    const [membersVisible, setMembersVisible] = useState(false);
-    const [members, setMembers] = useState<any[]>([]);
-    const [refreshMembersTrigger, setRefreshMembersTrigger] = useState(0);
+    const [refreshLoading, setRefreshLoading] = useState(false);
     const [isCreator, setIsCreator] = useState(false);
-    const { setLastBoardId } = useAppContext();
+    const { setLastBoardId, setCreatorId } = useAppContext();
     const [contributions, setContributions] = useState<{ totalJobs: number, contributions: any[] }>({
         totalJobs: 0,
         contributions: []
     });
     const [loadingContributions, setLoadingContributions] = useState(false);
 
-
-    const fetchMembers = async () => {
-        try {
-            const response = await api.get(`team/${teamId}/members`);
-            setMembers(response.data);
-        } catch (error) {
-            console.error('Failed to fetch team members:', error);
-        }
-    };
-
     const fetchTeam = async () => {
         try {
             const response = await api.get(`team/${teamId}`);
             setTeam(response.data);
-
-            // Check if the current user is the team creator
             setIsCreator(response.data.creatorId === userId);
+            setCreatorId(response.data.creatorId);
             console.log("Team creator ID:", response.data.creatorId);
             console.log("Current user ID:", userId);
             console.log("Is creator:", response.data.creatorId === userId);
         } catch (error) {
             console.error('Failed to fetch team:', error);
+            toast.error('Failed to load team data');
         } finally {
             setLoading(false);
         }
     };
-
-    const handleShowMembers = async () => {
-        await fetchMembers();
-        setMembersVisible(true);
-    };
-
-    const handleDeleteTeam = async () => {
-        try {
-            await api.delete(`team/${teamId}`);
-            navigate('/teams');
-        } catch (error) {
-            console.error('Failed to delete team:', error);
-        }
-    };
-
-    const handleDeleteBoard = async (boardId: string) => {
-        try {
-            await api.delete(`board/${boardId}`);
-            fetchTeam();
-        } catch (error) {
-            console.error('Failed to delete board:', error);
-        }
-    };
-
-    const handleRemoveMember = async (memberId: string) => {
-        try {
-            await api.delete(`team/${teamId}/members/${memberId}`);
-            fetchMembers();
-        } catch (error) {
-            console.error('Failed to remove member:', error);
-        }
-    };
-
-    const handleTeamConflictCancelled = (latestData?: any) => {
-        if (!latestData) return;
-        if (latestData) {
-            setTeam(latestData);
-        }
-    };
-    const handleBoardConflictCancelled = (latestBoard?: any) => {
-        if (!latestBoard) return;
-
-        const updatedBoards = team.boards.map((b: any) =>
-            b.id === latestBoard.id ? latestBoard : b
-        );
-
-        setTeam({ ...team, boards: updatedBoards });
-    };
-
-    useEffect(() => {
-        if (!teamId) return;
-
-        fetchTeam();
-        fetchMembers();
-
-        const cached = localStorage.getItem(`team_${teamId}_contributions`);
-        if (cached) {
-            setContributions(JSON.parse(cached));
-        }
-    }, [teamId, userId]);
 
     const fetchContributions = async () => {
         setLoadingContributions(true);
@@ -131,10 +59,63 @@ const TeamBoards = () => {
         }
     };
 
-    const handleInvitationSent = () => {
-        setRefreshMembersTrigger(prev => prev + 1);
-        fetchMembers();
+    const handleRefresh = async () => {
+        setRefreshLoading(true);
+        try {
+            await Promise.all([fetchTeam(), fetchContributions()]);
+            toast.success('Team data refreshed successfully');
+        } catch (error) {
+            toast.error('Failed to refresh team data');
+        } finally {
+            setRefreshLoading(false);
+        }
     };
+
+    const handleDeleteTeam = async () => {
+        try {
+            await api.delete(`team/${teamId}`);
+            navigate('/teams');
+        } catch (error) {
+            console.error('Failed to delete team:', error);
+            toast.error('Failed to delete team');
+        }
+    };
+
+    const handleDeleteBoard = async (boardId: string) => {
+        try {
+            await api.delete(`board/${boardId}`);
+            fetchTeam();
+            toast.success('Board deleted successfully');
+        } catch (error) {
+            console.error('Failed to delete board:', error);
+            toast.error('Failed to delete board');
+        }
+    };
+
+    const handleTeamConflictCancelled = (latestData?: any) => {
+        if (!latestData) return;
+        setTeam(latestData);
+    };
+
+    const handleBoardConflictCancelled = (latestBoard?: any) => {
+        if (!latestBoard) return;
+        setTeam((prev) => ({
+            ...prev,
+            boards: prev.boards?.map((b: any) => (b.id === latestBoard.id ? latestBoard : b))
+        }));
+    };
+
+    useEffect(() => {
+        if (!teamId) return;
+
+        fetchTeam();
+        fetchContributions();
+
+        const cached = localStorage.getItem(`team_${teamId}_contributions`);
+        if (cached) {
+            setContributions(JSON.parse(cached));
+        }
+    }, [teamId]);
 
     const handleBoardCreated = (newBoard: any) => {
         if (!newBoard) return;
@@ -159,14 +140,12 @@ const TeamBoards = () => {
     const handleTeamUpdated = (updatedTeam: any) => {
         if (!updatedTeam) return;
 
-        // Only update the team properties, preserve the existing boards
         setTeam(currentTeam => {
             if (!currentTeam) return updatedTeam;
 
             return {
                 ...currentTeam,
                 ...updatedTeam,
-                // Preserve the boards that were already loaded
                 boards: currentTeam.boards || []
             };
         });
@@ -193,66 +172,27 @@ const TeamBoards = () => {
         return <Spin size="large" />;
     }
 
-    const columns = [
-        {
-            title: 'Name',
-            dataIndex: 'userName',
-            key: 'userName',
-        },
-        {
-            title: 'Actions',
-            key: 'actions',
-            render: (_, record) => (
-                <Space>
-                    {isCreator && record.id !== team.creatorId && (
-                        <Popconfirm
-                            title="Remove Member"
-                            description="Are you sure you want to remove this member from the team?"
-                            onConfirm={() => handleRemoveMember(record.id)}
-                            okText="Yes"
-                            cancelText="No"
-                        >
-                            <Button type="link" danger>Remove</Button>
-                        </Popconfirm>
-                    )}
-                </Space>
-            )
-        }
-    ];
-
     return (
         <AppLayout>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
-                <div style={{ display: 'flex', alignItems: 'center' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                     <Link to="/teams">
-                        <Button type="text" icon={<ArrowLeftOutlined />} style={{ marginRight: 10 }}>
+                        <Button type="text" icon={<ArrowLeftOutlined />}>
                             Back
                         </Button>
                     </Link>
+
                     <Title level={2} style={{ margin: 0 }}>{team.name} Boards</Title>
                 </div>
-                <div>
+                <div style={{ display: 'flex', gap: 8 }}>
                     <Button
-                        style={{ marginRight: 10 }}
-                        onClick={handleShowMembers}
+                        icon={<ReloadOutlined />}
+                        onClick={handleRefresh}
+                        loading={refreshLoading}
+                        disabled={loading || refreshLoading}
                     >
-                        My Team
+                        Refresh
                     </Button>
-
-                    <DynamicForm
-                        formTitle="Invite user to team"
-                        schemaName="InvitationCreate"
-                        apiUrl="invitation"
-                        type='post'
-                        neededData={{ teamId }}
-                        onSuccess={handleInvitationSent}
-                        trigger={
-                            <Button style={{ marginRight: 10 }}>
-                                Invite Member
-                            </Button>
-                        }
-                    />
-
                     <DynamicForm
                         formTitle="Edit team"
                         schemaName="TeamUpdate"
@@ -260,7 +200,7 @@ const TeamBoards = () => {
                         type='patch'
                         onSuccess={handleTeamUpdated}
                         trigger={
-                            <Button style={{ marginRight: 10 }}>
+                            <Button>
                                 Edit Team
                             </Button>
                         }
@@ -268,7 +208,6 @@ const TeamBoards = () => {
                         fetchCurrentData={() => api.get(`team/${teamId}`).then(res => res.data)}
                         onCancelConflict={handleTeamConflictCancelled}
                     />
-
                     {isCreator && (
                         <Popconfirm
                             title="Delete Team"
@@ -278,21 +217,15 @@ const TeamBoards = () => {
                             cancelText="Cancel"
                             okButtonProps={{ danger: true }}
                         >
-                            <Button
-                                danger
-                                icon={<DeleteOutlined />}
-                                style={{ marginRight: 10 }}
-                                type={"primary"}
-                            >
+                            <Button danger icon={<DeleteOutlined />} type="primary">
                                 Delete Team
                             </Button>
                         </Popconfirm>
                     )}
-
                     <DynamicForm
                         formTitle="Create board"
                         schemaName="BoardCreate"
-                        apiUrl="board"
+                        apiUrl={`board/${teamId}/with-columns`}
                         type='post'
                         onSuccess={handleBoardCreated}
                         trigger={
@@ -320,11 +253,11 @@ const TeamBoards = () => {
                                     <p style={{
                                         fontSize: '18px',
                                         fontWeight: 'bold',
-                                        marginBottom: '12px' // Increased space below title
+                                        marginBottom: '12px'
                                     }}>
                                         {board.name}
                                     </p>
-                                    <p style={{ marginTop: '8px' }}> {/* Added space above this line */}
+                                    <p style={{ marginTop: '8px' }}>
                                         Click anywhere to view tasks
                                     </p>
                                 </Card>
@@ -348,26 +281,23 @@ const TeamBoards = () => {
                                         />
                                     }
                                 />
-
                                 <Popconfirm
                                     title="Delete Board"
                                     description="Are you sure you want to delete this Board? This action cannot be undone, and will delete all jobs belonging to the board."
                                     onConfirm={(e) => {
-                                        e.stopPropagation()
-                                        handleDeleteBoard(board.id)
+                                        e.stopPropagation();
+                                        handleDeleteBoard(board.id);
                                     }}
                                     okText="Yes, Delete"
                                     cancelText="Cancel"
                                     okButtonProps={{ danger: true }}
                                 >
-
                                     <Button
                                         danger
                                         icon={<DeleteOutlined />}
                                         size="small"
                                         type="text"
-                                    >
-                                    </Button>
+                                    />
                                 </Popconfirm>
                             </div>
                         </div>
@@ -379,7 +309,7 @@ const TeamBoards = () => {
                 title="Team Contributions"
                 extra={
                     <Button onClick={fetchContributions} loading={loadingContributions}>
-                        Refresh
+                        Refresh Contributions
                     </Button>
                 }
                 style={{ marginTop: 40 }}
@@ -412,19 +342,6 @@ const TeamBoards = () => {
                     ]}
                 />
             </Card>
-            <Modal
-                title="Team Members"
-                open={membersVisible}
-                onCancel={() => setMembersVisible(false)}
-                footer={null}
-            >
-                <Table
-                    dataSource={members}
-                    columns={columns}
-                    rowKey="id"
-                    pagination={false}
-                />
-            </Modal>
         </AppLayout>
     );
 };

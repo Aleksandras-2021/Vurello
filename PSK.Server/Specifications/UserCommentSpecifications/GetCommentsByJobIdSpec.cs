@@ -9,8 +9,7 @@ namespace PSK.Server.Specifications.CommentSpecifications
         {
             Query
                 .Where(c => c.JobId == jobId)
-                .Include(c => c.Creator)
-                .OrderByDescending(c => c.Id);
+                .Include(c => c.Creator);
         }
     }
 }

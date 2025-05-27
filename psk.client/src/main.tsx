@@ -5,7 +5,5 @@ import App from './App.tsx'
 import './darkmode.css'
 
 createRoot(document.getElementById('root')!).render(
-  <StrictMode>
     <App />
-  </StrictMode>,
 )

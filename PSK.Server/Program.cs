@@ -87,6 +87,8 @@ builder.Services.AddScoped<ITeamService, TeamService>();
 builder.Services.AddScoped<IJobService, JobService>();
 builder.Services.AddScoped<IInvitationService, InvitationService>();
 builder.Services.AddScoped<ILabelService, LabelService>();
+builder.Services.AddScoped<IRoleService, RoleService>();
+builder.Services.AddScoped<IPermissionService, PermissionService>();
 builder.Services.AddScoped<IBoardColumnService, BoardColumnService>();
 builder.Services.AddScoped<IUserCommentService, UserCommentService>();
 builder.Services.AddScoped<IGenericRepository<Job>, GenericRepository<Job>>();
@@ -110,11 +112,12 @@ builder.Host.ConfigureContainer<ContainerBuilder>(containerBuilder =>
         var sp = c.Resolve<IServiceProvider>();
         var options = sp.GetRequiredService<IOptions<LoggingInterceptorOptions>>().Value;
         var httpContextAccessor = sp.GetRequiredService<IHttpContextAccessor>();
+        var dbContext = sp.GetRequiredService<AppDbContext>();
 
         var projectRoot = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, @"..\..\..\..")); //log to Kredditoriai/psk.log
         var fullPath = Path.Combine(projectRoot, options.LogFilePath);
 
-        return new LoggingInterceptor(fullPath, httpContextAccessor, options.Enabled);
+        return new LoggingInterceptor(fullPath, httpContextAccessor, options.Enabled, dbContext);
     }).AsSelf().InstancePerDependency();
 
     containerBuilder.RegisterAssemblyTypes(typeof(Program).Assembly)

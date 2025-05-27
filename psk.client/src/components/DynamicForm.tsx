@@ -9,6 +9,8 @@ import UuidDropdownWidget from './UuidDropdownWidget';
 import RichTextWidget from './RichTextWidget';
 import ColorPickWidget from './ColorPickWidget';
 import LabelSelectionWidget from './LabelSelectionWidget';
+import PermissionSelectionWidget from './PermissionSelectionWidget';
+
 import { getSchema, getUiSchema, loadAllSchemas, isSchemaCacheLoaded, getErrorMessageMap } from './SchemaCache';
 import { toast } from 'react-toastify';
 
@@ -71,6 +73,7 @@ const DynamicForm: React.FC<DynamicFormProps> = ({
         richText: RichTextWidget,
         colorPick: ColorPickWidget,
         labelSelection: LabelSelectionWidget,
+        permissionSelection: PermissionSelectionWidget,
     };
 
     useEffect(() => {
@@ -163,9 +166,7 @@ const DynamicForm: React.FC<DynamicFormProps> = ({
             let payload;
             if (type === 'patch' && currentData) {
                 payload = Object.entries(submittedData).reduce((acc, [key, value]) => {
-                    if (currentData[key] !== value) {
                         acc[key] = value;
-                    }
                     return acc;
                 }, {} as Record<string, any>);
             } else {
@@ -248,7 +249,7 @@ const DynamicForm: React.FC<DynamicFormProps> = ({
     if (!formSchema) {
         return trigger
             ? cloneElement(trigger, { disabled: true })
-            : <div>Schema not found</div>;
+            : <Spin size="small" />;
     }
 
     const transformErrors = (errors: any[]) => {

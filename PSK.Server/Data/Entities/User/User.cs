@@ -14,6 +14,9 @@ namespace PSK.Server.Data.Entities
         [JsonIgnore]
         public ICollection<Job> AssignedJobs { get; set; } = new List<Job>();
 
+        public ICollection<UserComment> Comments { get; set; } = new List<UserComment>();
+
+        public ICollection<UserTeamRole> UserTeamRoles { get; set; } = new List<UserTeamRole>();
 
 
 

@@ -6,6 +6,8 @@ import TeamBoards from './pages/TeamBoards';
 import BoardDetail from './pages/BoardDetail';
 import Labels from './pages/Labels';
 import Auth from './pages/Auth';
+import Roles from './pages/Roles';
+import Users from './pages/Users';
 import { AuthProvider } from './components/AuthContext';
 import { ThemeProvider, useTheme } from './components/ThemeContext';
 import PrivateRoute from './components/PrivateRoute';
@@ -69,6 +71,8 @@ const ThemedApp = () => {
                                             <Route path="/teams/:teamId" element={<TeamBoards />} />
                                             <Route path="/boards/:boardId" element={<BoardDetail />} />
                                             <Route path="/labels" element={<Labels />} />
+                                            <Route path="/users" element={<Users />} />
+                                            <Route path="/roles" element={<Roles />} />
                                         </Routes>
                                     </AppLayout>
                                 </DndProvider>

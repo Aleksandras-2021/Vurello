@@ -3,17 +3,18 @@ using Microsoft.AspNetCore.Mvc;
 using PSK.Server.Data.Entities;
 using PSK.Server.Misc;
 using PSK.Server.Specifications.TeamSpecifications;
+using PSK.Server.Authorization;
 
 namespace PSK.Controllers
 {
     [Authorize]
     [ApiController]
     [Route("api/team")]
-    public class TeamController : GenericController<Team, TeamCreate, TeamUpdate>
+    public class TeamController : ControllerBase
     {
         private readonly ITeamService _teamService;
         private readonly IUserContext _userContext;
-        public TeamController(ITeamService service, IUserContext userContext) : base(service)
+        public TeamController(ITeamService service, IUserContext userContext)
         {
             _teamService = service;
             _userContext = userContext;
@@ -29,52 +30,48 @@ namespace PSK.Controllers
             return Ok(teams);
         }
 
-        [HttpGet("{id}")]
-        public async Task<IActionResult> GetTeam(Guid id)
+
+        [HttpGet("{teamId}")]
+        [BelongsToTeam]  
+        public async Task<IActionResult> GetTeam(Guid teamId)
         {
-            var team = await _teamService.GetSingleAsync(new GetTeamByIdSpec(id));
+            var team = await _teamService.GetSingleAsync(new GetTeamByIdSpec(teamId));
 
             return Ok(team);
         }
 
-        [HttpGet("{id}/members")]
-        public async Task<IActionResult> GetTeamMembers(Guid id)
+        [HttpGet("{teamId}/members")]
+        [BelongsToTeam]
+        public async Task<IActionResult> GetTeamMembers(Guid teamId)
         {
-            var teamMembers = await _teamService.GetAllAsync(new GetTeamMembersByIdSpec(id));
+            var teamMembers = await _teamService.GetAllAsync(new GetTeamMembersByIdSpec(teamId));
 
             return Ok(teamMembers);
         }
 
+        [HttpGet("{teamId}/roles")]
+        [BelongsToTeam]
+        public async Task<IActionResult> GetTeamRoles(Guid teamId)
+        {
+            var teamRoles = await _teamService.GetAllAsync(new GetTeamRolesSpec(teamId));
+
+            return Ok(teamRoles);
+        }
+
         [HttpDelete("{teamId}/members/{userId}")]
+        [HasPermission(PermissionName.TeamUsers)]
         public async Task<IActionResult> RemoveMember(Guid teamId, Guid userId)
         {
             var team = await _teamService.GetSingleAsync(new GetTeamByIdSpec(teamId));
             var currentUserId = _userContext.GetUserId(User);
-            if (team.CreatorId != currentUserId)
-            {
-                return Forbid("Only the team creator can remove members.");
-            }
 
-            if (userId == team.CreatorId)
-            {
-                return BadRequest("Cannot remove creator from team.");
-            }
+            await _teamService.RemoveUserFromTeam(teamId, userId, currentUserId);
+            return NoContent();
 
-            try
-            {
-                await _teamService.RemoveUserFromTeam(teamId, userId);
-                return NoContent();
-            }
-            catch (KeyNotFoundException e)
-            {
-                return NotFound(e.Message);
-            }
-            catch (InvalidOperationException e)
-            {
-                return BadRequest(e.Message);
-            }
         }
+
         [HttpGet("{teamId}/contributions")]
+        [BelongsToTeam]
         public async Task<IActionResult> GetContributions(Guid teamId)
         {
             var team = await _teamService.GetSingleAsync(new GetTeamByIdSpec(teamId));
@@ -82,6 +79,54 @@ namespace PSK.Controllers
             var contributionsDTO = _teamService.GetContributions(team);
 
             return Ok(contributionsDTO);
+        }
+
+        [HttpPut("{teamId}/assign")]
+        [HasPermission(PermissionName.Roles)]
+        public async Task<IActionResult> AssignRole(Guid teamId, [FromBody] AssignRole data)
+        {
+            await _teamService.AssignRole(teamId, data.RoleId, data.UserId);
+            return Ok();
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> Create([FromBody] TeamCreate create)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+            var entity = await _teamService.CreateAsync(create);
+            return Ok(entity);
+        }
+
+        [HttpPatch("{teamId}")]
+        [HasPermission(PermissionName.Team)]
+        public async Task<IActionResult> Update(Guid teamId, [FromBody] TeamUpdate update)
+        {
+
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+            var updated = await _teamService.UpdateAsync(teamId, update);
+            if (updated == null)
+            {
+                return NotFound();
+            }
+
+            return Ok(updated);
+        }
+
+        [HttpDelete("{teamId}")]
+        [HasPermission(PermissionName.Team)]
+        public async Task<IActionResult> Delete(Guid teamId)
+        {
+            await _teamService.DeleteAsync(teamId);
+
+            return NoContent();
         }
     }
 }

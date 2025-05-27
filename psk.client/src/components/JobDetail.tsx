@@ -139,7 +139,7 @@ const JobDetail: React.FC<JobDetailProps> = ({
         setLoadingComments(true);
         try {
             const response = await api.get(`comments/job/${job.id}`);
-            setComments(response.data);
+            setComments(response.data.reverse());
         } catch (error) {
             console.error('Failed to fetch comments:', error);
             message.error("Failed to load comments.");
@@ -151,12 +151,12 @@ const JobDetail: React.FC<JobDetailProps> = ({
     const postComment = async () => {
         if (!newComment.trim()) return;
         try {
-            const response = await api.post("comments", {
+            const response = await api.post(`comments/${job.id}`, {
                 contents: newComment,
                 jobId: job.id
             });
-            setComments(prev => [response.data, ...prev]);
-            setNewComment('');
+            fetchComments();
+            setNewComment("")
         } catch (error) {
             console.error('Failed to post comment:', error);
             message.error("Failed to post comment.");

@@ -1,6 +1,8 @@
 ﻿namespace PSK.Server.Interceptors;
 
 using Castle.DynamicProxy;
+using Microsoft.EntityFrameworkCore;
+using PSK.Server.Data;
 using System;
 using System.IO;
 using System.Security.Claims;
@@ -11,17 +13,19 @@ public class LoggingInterceptor : IInterceptor
     private readonly string _logFilePath;
     private readonly IHttpContextAccessor _httpContextAccessor;
     private readonly bool _enabled;
+    private readonly AppDbContext _appDbContext;
 
-    public LoggingInterceptor(string logFilePath, IHttpContextAccessor httpContextAccessor, bool enabled)
+    public LoggingInterceptor(string logFilePath, IHttpContextAccessor httpContextAccessor, bool enabled, AppDbContext dbContext)
+
     {
         _logFilePath = logFilePath;
         _httpContextAccessor = httpContextAccessor;
         _enabled = enabled;
+        _appDbContext = dbContext;
     }
 
     public void Intercept(IInvocation invocation)
     {
-
         if (!_enabled)
         {
             invocation.Proceed();
@@ -33,14 +37,35 @@ public class LoggingInterceptor : IInterceptor
         logEntry.AppendLine($"Timestamp: {DateTime.UtcNow:o}");
         logEntry.AppendLine($"Action: {invocation.TargetType.Name}.{invocation.Method.Name}");
 
+
+
         var user = _httpContextAccessor.HttpContext?.User;
 
         if (user != null)
         {
             var username = user.Identity?.Name ?? "Unknown";
-            var roles = string.Join(", ", user.FindAll(ClaimTypes.Role).Select(c => c.Value));
             logEntry.AppendLine($"User: {username}");
-            logEntry.AppendLine($"Roles: {roles}");
+
+            var userIdStr = user.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (Guid.TryParse(userIdStr, out var userId))
+            {
+                var roleNames = _appDbContext.UserTeamRoles
+                    .Where(utr => utr.UserId == userId)
+                    .Include(utr => utr.Role)
+                    .Select(utr => utr.Role.Name)
+                    .Distinct()
+                    .ToList();
+
+                var roles = roleNames.Any()
+                    ? string.Join(", ", roleNames)
+                    : "Creator";
+
+                logEntry.AppendLine($"Roles: {roles}");
+            }
+            else
+            {
+                logEntry.AppendLine("Roles: Could not determine user ID");
+            }
         }
         else
         {
@@ -64,6 +89,7 @@ public class LoggingInterceptor : IInterceptor
             WriteLogEntry(logEntry.ToString());
         }
     }
+
 
     private void WriteLogEntry(string logEntry)
     {

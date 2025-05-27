@@ -198,7 +198,8 @@ namespace PSK.Server.Migrations
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
+                        .HasColumnType("uuid")
+                        .HasDefaultValueSql("gen_random_uuid()");
 
                     b.Property<Guid>("BoardId")
                         .HasColumnType("uuid");
@@ -224,7 +225,7 @@ namespace PSK.Server.Migrations
 
                     b.HasIndex("BoardId");
 
-                    b.ToTable("BoardColumn");
+                    b.ToTable("BoardColumns");
                 });
 
             modelBuilder.Entity("PSK.Server.Data.Entities.Invitation", b =>
@@ -377,6 +378,90 @@ namespace PSK.Server.Migrations
                     b.ToTable("Labels");
                 });
 
+            modelBuilder.Entity("PSK.Server.Data.Entities.Permission", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Permission");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = new Guid("00000000-0000-0000-0000-000000000001"),
+                            Description = "Allow creating, editing, deleting jobs",
+                            Name = "Job"
+                        },
+                        new
+                        {
+                            Id = new Guid("00000000-0000-0000-0000-000000000002"),
+                            Description = "Allow creating, editing, deleting board",
+                            Name = "Board"
+                        },
+                        new
+                        {
+                            Id = new Guid("00000000-0000-0000-0000-000000000003"),
+                            Description = "Allow creating, editing, deleting labels",
+                            Name = "Labels"
+                        },
+                        new
+                        {
+                            Id = new Guid("00000000-0000-0000-0000-000000000004"),
+                            Description = "Allow creating, editing, deleting roles and assign roles to users",
+                            Name = "Roles"
+                        },
+                        new
+                        {
+                            Id = new Guid("00000000-0000-0000-0000-000000000005"),
+                            Description = "Allow inviting and removing users from team",
+                            Name = "TeamUsers"
+                        },
+                        new
+                        {
+                            Id = new Guid("00000000-0000-0000-0000-000000000006"),
+                            Description = "Allow to edit and delete team",
+                            Name = "Team"
+                        });
+                });
+
+            modelBuilder.Entity("PSK.Server.Data.Entities.Role", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasDefaultValueSql("gen_random_uuid()");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<Guid>("TeamId")
+                        .HasColumnType("uuid");
+
+                    b.Property<uint>("Version")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("xid")
+                        .HasColumnName("xmin");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TeamId");
+
+                    b.ToTable("Roles");
+                });
+
             modelBuilder.Entity("PSK.Server.Data.Entities.Team", b =>
                 {
                     b.Property<Guid>("Id")
@@ -473,7 +558,8 @@ namespace PSK.Server.Migrations
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
+                        .HasColumnType("uuid")
+                        .HasDefaultValueSql("gen_random_uuid()");
 
                     b.Property<string>("Contents")
                         .IsRequired()
@@ -494,7 +580,42 @@ namespace PSK.Server.Migrations
 
                     b.HasIndex("JobId");
 
-                    b.ToTable("UserComment");
+                    b.ToTable("Comments");
+                });
+
+            modelBuilder.Entity("PSK.Server.Data.Entities.UserTeamRole", b =>
+                {
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("TeamId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("RoleId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("UserId", "TeamId");
+
+                    b.HasIndex("RoleId");
+
+                    b.HasIndex("TeamId");
+
+                    b.ToTable("UserTeamRoles");
+                });
+
+            modelBuilder.Entity("PermissionRole", b =>
+                {
+                    b.Property<Guid>("PermissionsId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("RolesId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("PermissionsId", "RolesId");
+
+                    b.HasIndex("RolesId");
+
+                    b.ToTable("PermissionRole");
                 });
 
             modelBuilder.Entity("TeamUser", b =>
@@ -680,6 +801,17 @@ namespace PSK.Server.Migrations
                     b.Navigation("Team");
                 });
 
+            modelBuilder.Entity("PSK.Server.Data.Entities.Role", b =>
+                {
+                    b.HasOne("PSK.Server.Data.Entities.Team", "Team")
+                        .WithMany("Roles")
+                        .HasForeignKey("TeamId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Team");
+                });
+
             modelBuilder.Entity("PSK.Server.Data.Entities.Team", b =>
                 {
                     b.HasOne("PSK.Server.Data.Entities.User", "Creator")
@@ -693,7 +825,7 @@ namespace PSK.Server.Migrations
             modelBuilder.Entity("PSK.Server.Data.Entities.UserComment", b =>
                 {
                     b.HasOne("PSK.Server.Data.Entities.User", "Creator")
-                        .WithMany()
+                        .WithMany("Comments")
                         .HasForeignKey("CreatorId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -707,6 +839,48 @@ namespace PSK.Server.Migrations
                     b.Navigation("Creator");
 
                     b.Navigation("Job");
+                });
+
+            modelBuilder.Entity("PSK.Server.Data.Entities.UserTeamRole", b =>
+                {
+                    b.HasOne("PSK.Server.Data.Entities.Role", "Role")
+                        .WithMany("UserTeamRoles")
+                        .HasForeignKey("RoleId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("PSK.Server.Data.Entities.Team", "Team")
+                        .WithMany("UserTeamRoles")
+                        .HasForeignKey("TeamId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("PSK.Server.Data.Entities.User", "User")
+                        .WithMany("UserTeamRoles")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Role");
+
+                    b.Navigation("Team");
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("PermissionRole", b =>
+                {
+                    b.HasOne("PSK.Server.Data.Entities.Permission", null)
+                        .WithMany()
+                        .HasForeignKey("PermissionsId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("PSK.Server.Data.Entities.Role", null)
+                        .WithMany()
+                        .HasForeignKey("RolesId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("TeamUser", b =>
@@ -738,11 +912,14 @@ namespace PSK.Server.Migrations
 
             modelBuilder.Entity("PSK.Server.Data.Entities.Job", b =>
                 {
-
                     b.Navigation("Comments");
 
                     b.Navigation("JobHistories");
+                });
 
+            modelBuilder.Entity("PSK.Server.Data.Entities.Role", b =>
+                {
+                    b.Navigation("UserTeamRoles");
                 });
 
             modelBuilder.Entity("PSK.Server.Data.Entities.Team", b =>
@@ -750,13 +927,21 @@ namespace PSK.Server.Migrations
                     b.Navigation("Boards");
 
                     b.Navigation("Labels");
+
+                    b.Navigation("Roles");
+
+                    b.Navigation("UserTeamRoles");
                 });
 
             modelBuilder.Entity("PSK.Server.Data.Entities.User", b =>
                 {
                     b.Navigation("AssignedJobs");
 
+                    b.Navigation("Comments");
+
                     b.Navigation("CreatedTeams");
+
+                    b.Navigation("UserTeamRoles");
                 });
 #pragma warning restore 612, 618
         }

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Button, Card, Table, Space, Typography, Input, Popconfirm, Modal, Tag, Spin, Alert } from 'antd';
-import { DeleteOutlined, PlusOutlined, EditOutlined, SearchOutlined, ArrowLeftOutlined } from '@ant-design/icons';
+import { DeleteOutlined, PlusOutlined, EditOutlined, SearchOutlined, ArrowLeftOutlined, ReloadOutlined } from '@ant-design/icons';
 import { api } from '../components/API';
 import { toast } from 'react-toastify';
 import { useAppContext } from '../components/AppContext';
@@ -29,6 +29,7 @@ const Labels: React.FC = () => {
     const [selectedLabel, setSelectedLabel] = useState<Label | null>(null);
     const [currentTeam, setCurrentTeam] = useState<any>(null);
     const [teamLoading, setTeamLoading] = useState(false);
+    const [refreshLoading, setRefreshLoading] = useState(false);
     const { lastTeamId } = useAppContext();
     const navigate = useNavigate();
 
@@ -62,6 +63,18 @@ const Labels: React.FC = () => {
             toast.error('Failed to load labels');
         } finally {
             setLoading(false);
+        }
+    };
+
+    const handleRefresh = async () => {
+        setRefreshLoading(true);
+        try {
+            await Promise.all([fetchLabels(), fetchCurrentTeam()]);
+            toast.success('Data refreshed successfully');
+        } catch (error) {
+            toast.error('Failed to refresh data');
+        } finally {
+            setRefreshLoading(false);
         }
     };
 
@@ -341,10 +354,18 @@ const Labels: React.FC = () => {
                             style={{ width: 250 }}
                             allowClear
                         />
+                        <Button
+                            icon={<ReloadOutlined />}
+                            onClick={handleRefresh}
+                            loading={refreshLoading}
+                            disabled={loading || teamLoading || refreshLoading}
+                        >
+                            Refresh
+                        </Button>
                         <DynamicForm
                             formTitle="Create Label"
                             schemaName="LabelCreate"
-                            apiUrl="label"
+                            apiUrl={`label/${lastTeamId}`}
                             type="post"
                             neededData={{ teamId: lastTeamId }}
                             onSuccess={handleLabelCreated}

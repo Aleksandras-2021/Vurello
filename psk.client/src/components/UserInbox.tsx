@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { List, Typography, Button, Modal, message, Badge, Dropdown } from 'antd';
-import { MailOutlined, BellOutlined, CheckOutlined, CloseOutlined } from '@ant-design/icons';
+import { MailOutlined, BellOutlined, CheckOutlined, CloseOutlined, ReloadOutlined } from '@ant-design/icons';
 import { api } from './API';
 import { toast } from 'react-toastify';
 
@@ -10,6 +10,7 @@ const UserInbox: React.FC = () => {
     const [invitations, setInvitations] = useState<any[]>([]);
     const [loading, setLoading] = useState(false);
     const [isModalVisible, setIsModalVisible] = useState(false);
+    const [refreshLoading, setRefreshLoading] = useState(false);
 
     const fetchInvitations = async () => {
         try {
@@ -18,6 +19,7 @@ const UserInbox: React.FC = () => {
             setInvitations(Array.isArray(response.data) ? response.data : []);
         } catch (error) {
             console.error('Failed to fetch invitations:', error);
+            toast.error('Failed to fetch invitations');
         } finally {
             setLoading(false);
         }
@@ -25,8 +27,6 @@ const UserInbox: React.FC = () => {
 
     useEffect(() => {
         fetchInvitations();
-        const interval = setInterval(fetchInvitations, 30000);
-        return () => clearInterval(interval);
     }, []);
 
     const handleRespondToInvitation = async (invitationId: string, accept: boolean) => {
@@ -41,9 +41,7 @@ const UserInbox: React.FC = () => {
 
             fetchInvitations();
 
-            if (accept) {
-                window.location.href = '/teams';
-            }
+
         } catch (error) {
             console.error('Failed to respond to invitation:', error);
             message.error('Failed to respond to invitation');
@@ -52,7 +50,19 @@ const UserInbox: React.FC = () => {
 
     const showModal = () => {
         setIsModalVisible(true);
-        fetchInvitations();
+        fetchInvitations()
+    };
+
+    const handleRefresh = async () => {
+        setRefreshLoading(true);
+        try {
+            await fetchInvitations();
+            toast.success('Invitations refreshed successfully');
+        } catch (error) {
+            toast.error('Failed to refresh invitations');
+        } finally {
+            setRefreshLoading(false);
+        }
     };
 
     const items = [
@@ -82,7 +92,23 @@ const UserInbox: React.FC = () => {
                 title="Team Invitations"
                 open={isModalVisible}
                 onCancel={() => setIsModalVisible(false)}
-                footer={null}
+                footer={[
+                    <Button
+                        key="refresh"
+                        icon={<ReloadOutlined />}
+                        onClick={handleRefresh}
+                        loading={refreshLoading}
+                        disabled={loading || refreshLoading}
+                    >
+                        Refresh
+                    </Button>,
+                    <Button
+                        key="close"
+                        onClick={() => setIsModalVisible(false)}
+                    >
+                        Close
+                    </Button>
+                ]}
                 width={600}
             >
                 <List

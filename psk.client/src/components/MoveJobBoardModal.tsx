@@ -3,6 +3,7 @@ import { Modal, Select, Button, Typography, message, Spin } from 'antd';
 import { SwapOutlined } from '@ant-design/icons';
 import { api } from './API';
 import { toast } from 'react-toastify';
+import { useTheme } from './ThemeContext';
 
 const { Text } = Typography;
 
@@ -21,6 +22,7 @@ const MoveJobBoardModal: React.FC<MoveJobBoardModalProps> = ({
     currentTeamId,
     onSuccess
 }) => {
+    const { isDarkMode } = useTheme();
     const [loading, setLoading] = useState(false);
     const [targetBoardId, setTargetBoardId] = useState<string>('');
     const [availableBoards, setAvailableBoards] = useState<any[]>([]);
@@ -151,11 +153,18 @@ const MoveJobBoardModal: React.FC<MoveJobBoardModalProps> = ({
             {selectedBoard && (
                 <div style={{
                     padding: 12,
-                    backgroundColor: '#f6f6f6',
+                    backgroundColor: isDarkMode ? '#2a2a2a' : '#f6f6f6',
                     borderRadius: 6,
-                    marginTop: 12
+                    marginTop: 12,
+                    border: isDarkMode ? '1px solid #434343' : 'none'
                 }}>
-                    <Text type="secondary" style={{ fontSize: '12px' }}>
+                    <Text
+                        type="secondary"
+                        style={{
+                            fontSize: '12px',
+                            color: isDarkMode ? '#ffffff' : undefined
+                        }}
+                    >
                         The job will be moved to "{selectedBoard.name}" and placed in the default "To Do" column.
                     </Text>
                 </div>

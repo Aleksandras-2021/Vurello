@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using PSK.Server.Authorization;
 using PSK.Server.Data.Entities;
 using PSK.Server.Specifications.JobSpecifications;
 
@@ -9,29 +10,25 @@ namespace PSK.Controllers
     [Authorize]
     [ApiController]
     [Route("api/job")]
-    public class JobController : GenericController<Job, JobCreate, JobUpdate>
+    public class JobController : ControllerBase
     {
         private readonly IJobService _jobService;
 
-        public JobController(IJobService service) : base(service)
+        public JobController(IJobService service)
         {
             _jobService = service;
         }
 
-        [HttpGet]
-        public async Task<IActionResult> GetAll([FromQuery] Guid? boardId)
+        [HttpGet("board/{boardId}")]
+        [BelongsToTeam]
+        public async Task<IActionResult> GetAll(Guid boardId)
         {
-            if (boardId.HasValue)
-            {
-                var jobs = await _jobService.GetAllAsync(new GetJobsByBoardSpec(boardId.Value));
-                return Ok(jobs);
-            }
-
-            var allJobs = await _jobService.GetAllAsync(new GetAllJobsSpec());
-            return Ok(allJobs);
+            var jobs = await _jobService.GetAllAsync(new GetJobsByBoardSpec(boardId));
+            return Ok(jobs);
         }
 
         [HttpGet("{jobId}")]
+        [BelongsToTeam]
         public async Task<IActionResult> GetJobById(Guid jobId)
         {
             var job = await _jobService.GetSingleAsync(new GetJobByIdSpec(jobId));
@@ -39,9 +36,9 @@ namespace PSK.Controllers
         }
 
         [HttpPut("{jobId}/labels")]
+        [HasPermission(PermissionName.Job)]
         public async Task<IActionResult> UpdateLabels(Guid jobId, [FromBody] UpdateLabels labels)
         {
-            // Get the job with its current labels loaded
             var job = await _jobService.GetSingleAsync(new GetJobByIdSpec(jobId));
             
             if (job == null)
@@ -51,87 +48,66 @@ namespace PSK.Controllers
 
             await _jobService.UpdateLabels(job, labels);
 
-            return Ok();
-        }
-
-        [HttpPost("column-order")]
-        public async Task<IActionResult> UpdateColumnOrder([FromBody] UpdateColumnOrderRequest request)
-        {
-            try
-            {
-                foreach (var jobUpdate in request.Jobs)
-                {
-                    var job = await _jobService.GetSingleAsync(new GetJobByIdSpec(jobUpdate.JobId));
-                    if (job != null)
-                    {
-                        await _jobService.UpdateAsync(jobUpdate.JobId, new JobUpdate
-                        {
-                            ColumnPosition = jobUpdate.Position,
-                            Version = job.Version
-                        });
-                    }
-                }
-                return Ok();
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, new { message = ex.Message });
-            }
+            return Ok(job);
         }
 
         [HttpPost("{jobId}/move-to-column/{columnId}")]
+        [HasPermission(PermissionName.Job)]
         public async Task<IActionResult> MoveJobToColumn(Guid jobId, Guid columnId)
         {
-            try
-            {
                 await _jobService.MoveJobToColumnAsync(jobId, columnId);
                 return Ok();
-            }
-            catch (KeyNotFoundException ex)
-            {
-                return NotFound(new { message = ex.Message });
-            }
-            catch (InvalidOperationException ex)
-            {
-                return BadRequest(new { message = ex.Message });
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, new { message = ex.Message });
-            }
         }
 
         [HttpPost("{jobId}/move-to-board/{targetBoardId}")]
+        [HasPermission(PermissionName.Job)]
         public async Task<IActionResult> MoveJobToBoard(Guid jobId, Guid targetBoardId)
         {
-            try
+
+            await _jobService.MoveJobToBoardAsync(jobId, targetBoardId);
+            return Ok(new { message = "Job moved to new board successfully" });
+        }
+
+        [HttpPost("{teamId}")]
+        [HasPermission(PermissionName.Job)]
+        public async Task<IActionResult> Create([FromBody] JobCreate create)
+        {
+            if (!ModelState.IsValid)
             {
-                await _jobService.MoveJobToBoardAsync(jobId, targetBoardId);
-                return Ok(new { message = "Job moved to new board successfully" });
+                return BadRequest(ModelState);
             }
-            catch (KeyNotFoundException ex)
+
+            var entity = await _jobService.CreateAsync(create);
+            return Ok(entity);
+        }
+
+        [HttpPatch("{jobId}")]
+        [HasPermission(PermissionName.Job)]
+        public async Task<IActionResult> Update(Guid jobId, [FromBody] JobUpdate update)
+        {
+
+            if (!ModelState.IsValid)
             {
-                return NotFound(new { message = ex.Message });
+                return BadRequest(ModelState);
             }
-            catch (InvalidOperationException ex)
+
+            var updated = await _jobService.UpdateAsync(jobId, update);
+            if (updated == null)
             {
-                return BadRequest(new { message = ex.Message });
+                return NotFound();
             }
-            catch (Exception ex)
-            {
-                return StatusCode(500, new { message = ex.Message });
-            }
+
+            return Ok(updated);
+        }
+
+        [HttpDelete("{jobId}")]
+        [HasPermission(PermissionName.Job)]
+        public async Task<IActionResult> Delete(Guid jobId)
+        {
+            await _jobService.DeleteAsync(jobId);
+
+            return NoContent();
         }
     }
 
-    public class UpdateColumnOrderRequest
-    {
-        public List<JobPositionUpdate> Jobs { get; set; } = new List<JobPositionUpdate>();
-    }
-
-    public class JobPositionUpdate
-    {
-        public Guid JobId { get; set; }
-        public int Position { get; set; }
-    }
 }

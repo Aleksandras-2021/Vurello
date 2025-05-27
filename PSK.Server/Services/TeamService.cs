@@ -1,4 +1,5 @@
-﻿using System.Security.Claims;
+﻿using System.Data;
+using System.Security.Claims;
 using Microsoft.AspNetCore.Identity;
 using PSK.Server.Data.Entities;
 using PSK.Server.DTOs;
@@ -8,8 +9,10 @@ using PSK.Server.Specifications.TeamSpecifications;
 public interface ITeamService : IGenericService<Team, TeamCreate, TeamUpdate>
 {
     void AddUserToTeam(Team team, User user);
-    Task RemoveUserFromTeam(Guid teamId, Guid userId);
+    Task RemoveUserFromTeam(Guid teamId, Guid userId, Guid currentUserId);
     TeamContributionsDTO GetContributions(Team team);
+
+    Task AssignRole(Guid teamId, Guid roleId, Guid userId);
 }
 
 public class TeamService : GenericService<Team, TeamCreate, TeamUpdate>, ITeamService
@@ -36,17 +39,17 @@ public class TeamService : GenericService<Team, TeamCreate, TeamUpdate>, ITeamSe
         _repository.UpdateVersion(entity, update.Version);
     }
 
-    public override async Task<bool> AuthorizeAsync(Guid id, ClaimsPrincipal user)
-    {
-        var userId = _userContext.GetUserId(user).ToString();
-        var team = await _repository.SingleOrDefaultAsync(
-            new GetTeamForAuthorizationSpec(id));
-        if (team == null)
-        {
-            throw new KeyNotFoundException("Team wiht ID {id} not found.");
-        }
-        return team.CreatorId.ToString() == userId;
-    }
+    //public override async Task<bool> AuthorizeAsync(Guid id, ClaimsPrincipal user)
+    //{
+    //    var userId = _userContext.GetUserId(user).ToString();
+    //    var team = await _repository.SingleOrDefaultAsync(
+    //        new GetTeamForAuthorizationSpec(id));
+    //    if (team == null)
+    //    {
+    //        throw new KeyNotFoundException("Team wiht ID {id} not found.");
+    //    }
+    //    return team.CreatorId.ToString() == userId;
+    //}
 
     public void AddUserToTeam(Team team, User user)
     {
@@ -68,8 +71,9 @@ public class TeamService : GenericService<Team, TeamCreate, TeamUpdate>, ITeamSe
         team.Users.Add(user);
     }
 
-    public async Task RemoveUserFromTeam(Guid teamId, Guid userId)
+    public async Task RemoveUserFromTeam(Guid teamId, Guid userId, Guid currentUserId)
     {
+
         var team = await _repository.SingleOrDefaultAsync(new GetTeamByIdSpec(teamId));
         if (team == null)
         {
@@ -117,5 +121,26 @@ public class TeamService : GenericService<Team, TeamCreate, TeamUpdate>, ITeamSe
         };
 
         return contributionsDto;
+    }
+
+    public async Task AssignRole(Guid teamId, Guid roleId, Guid userId)
+    {
+        var team = await GetSingleAsync(new GetTeamMemberRoles(teamId));
+
+        var existingUserTeamRole = team.UserTeamRoles.FirstOrDefault(utr => utr.UserId == userId);
+
+        if (existingUserTeamRole != null)
+        {
+            team.UserTeamRoles.Remove(existingUserTeamRole);
+        }
+
+        team.UserTeamRoles.Add(new UserTeamRole
+        {
+            UserId = userId,
+            TeamId = teamId,
+            RoleId = roleId
+        });
+
+        await _teamRepository.UpdateAsync(team);
     }
 }

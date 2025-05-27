@@ -14,9 +14,11 @@ public interface IGenericService<TEntity, TCreate, TUpdate>
     Task<TEntity> CreateAsync(TCreate create);
     Task<TEntity> UpdateAsync(Guid id, TUpdate update);
     Task DeleteAsync(Guid id);
-    Task<bool> AuthorizeAsync(Guid id, ClaimsPrincipal user);
-    Task<bool> AuthorizeAsync(TCreate create, ClaimsPrincipal user);
-    Task<bool> AuthorizeAsync(TUpdate update, Guid id, ClaimsPrincipal user);
+    Task<bool> AuthorizeAsync(Guid id, ClaimsPrincipal user, string permission);
+    Task<bool> AuthorizeAsync(TCreate create, ClaimsPrincipal user, string permission);
+    Task<bool> AuthorizeAsync(TUpdate update, Guid id, ClaimsPrincipal user, string permission);
+    Task<bool> AuthorizeAsync(string permission, ClaimsPrincipal user);
+
     Task OnCreatingAsync(TEntity entity, TCreate create);
     Task OnUpdatingAsync(TEntity entity, TUpdate update);
 
@@ -96,26 +98,34 @@ public class GenericService<TEntity, TCreate, TUpdate> : IGenericService<TEntity
     }
 
 
-    public virtual async Task<bool> AuthorizeAsync(Guid id, ClaimsPrincipal user)
+    public virtual async Task<bool> AuthorizeAsync(string permission, ClaimsPrincipal user)
     {
         await Task.CompletedTask;
 
         return true;
     }
 
-    public virtual async Task<bool> AuthorizeAsync(TCreate create, ClaimsPrincipal user)
+    public virtual async Task<bool> AuthorizeAsync(Guid id, ClaimsPrincipal user, string permission)
     {
         await Task.CompletedTask;
 
         return true;
     }
 
-    public virtual async Task<bool> AuthorizeAsync(TUpdate update, Guid id, ClaimsPrincipal user)
+    public virtual async Task<bool> AuthorizeAsync(TCreate create, ClaimsPrincipal user, string permission)
     {
         await Task.CompletedTask;
 
         return true;
     }
+
+    public virtual async Task<bool> AuthorizeAsync(TUpdate update, Guid id, ClaimsPrincipal user, string permission)
+    {
+        await Task.CompletedTask;
+
+        return true;
+    }
+
     public virtual async Task OnCreatingAsync(TEntity entity, TCreate create)
     {
         await Task.CompletedTask;

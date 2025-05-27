@@ -19,7 +19,8 @@ import {
     DeleteOutlined,
     ClockCircleOutlined,
     MenuOutlined,
-    EditOutlined
+    EditOutlined,
+    ReloadOutlined
 } from '@ant-design/icons';
 import { useDrag, useDrop, DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
@@ -201,18 +202,18 @@ const DraggableJobCard = ({ job, teamMembers, onDrop, boardId, setSelectedJob })
 };
 
 const DraggableColumn = ({
-                             column,
-                             jobs,
-                             onDrop,
-                             teamMembers,
-                             boardId,
-                             setSelectedJob,
-                             index,
-                             moveColumnVisually,
-                             onColumnDragEnd,
-                             onColumnEdit,
-                             onColumnDelete
-                         }) => {
+    column,
+    jobs,
+    onDrop,
+    teamMembers,
+    boardId,
+    setSelectedJob,
+    index,
+    moveColumnVisually,
+    onColumnDragEnd,
+    onColumnEdit,
+    onColumnDelete
+}) => {
     const dragRef = React.useRef(null);
 
     const [{ isDragging }, drag] = useDrag(() => ({
@@ -224,8 +225,9 @@ const DraggableColumn = ({
                 const fromIndex = item.index;
                 const toIndex = dropResult.index;
                 if (fromIndex !== toIndex) {
-                    moveColumnVisually(fromIndex, toIndex);
-                    onColumnDragEnd();
+                    moveColumnVisually(fromIndex, toIndex, (updatedColumns) => {
+                        onColumnDragEnd(updatedColumns);
+                    });
                 }
             }
         },
@@ -400,13 +402,78 @@ const BoardDetail = () => {
     const [board, setBoard] = useState(null);
     const [jobs, setJobs] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [refreshLoading, setRefreshLoading] = useState(false);
     const [teamMembers, setTeamMembers] = useState([]);
-    const [selectedJob, setSelectedJob] = useState(null); // Fixed: changed from selectedJobDetails to selectedJob
+    const [selectedJob, setSelectedJob] = useState(null);
     const [columns, setColumns] = useState([]);
     const [originalColumns, setOriginalColumns] = useState([]);
     const [selectedColumn, setSelectedColumn] = useState(null);
     const [isDeleteModalVisible, setIsDeleteModalVisible] = useState(false);
     const [columnToDelete, setColumnToDelete] = useState(null);
+
+    const fetchBoardData = async () => {
+        setLoading(true);
+        try {
+            const boardResponse = await api.get(`board/${boardId}`);
+            setBoard(boardResponse.data);
+            setJobs(boardResponse.data.jobs);
+            if (selectedJob) {
+                const newSelectedJob = boardResponse.data.jobs.find(job => job.id === selectedJob.id);
+                setSelectedJob(newSelectedJob || null);
+            }
+        } catch (error) {
+            console.error('Failed to fetch board data:', error);
+            toast.error('Failed to load board data');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const fetchBoardColumns = async () => {
+        try {
+            const columnsResponse = await api.get(`board-column/board/${boardId}`);
+            const sortedColumns = columnsResponse.data.sort((a, b) => a.order - b.order);
+            setColumns(sortedColumns);
+            setOriginalColumns([...sortedColumns]);
+            return sortedColumns;
+        } catch (error) {
+            console.error('Failed to fetch board columns:', error);
+            toast.error('Failed to load board columns');
+            setColumns([]);
+            setOriginalColumns([]);
+            return [];
+        }
+    };
+
+    const fetchTeamMembers = async (teamId) => {
+        if (!teamId) return;
+        try {
+            const response = await api.get(`team/${teamId}/members`);
+            const members = [
+                { value: '00000000-0000-0000-0000-000000000000', label: 'Unassigned' },
+                ...response.data.map((m) => ({ value: m.id, label: m.userName }))
+            ];
+            setTeamMembers(members);
+        } catch (error) {
+            console.error('Failed to fetch team members:', error);
+            toast.error('Failed to load team members');
+        }
+    };
+
+    const handleRefresh = async () => {
+        setRefreshLoading(true);
+        try {
+            await Promise.all([fetchBoardData(), fetchBoardColumns()]);
+            if (board?.teamId) {
+                await fetchTeamMembers(board.teamId);
+            }
+            toast.success('Board data refreshed successfully');
+        } catch (error) {
+            toast.error('Failed to refresh board data');
+        } finally {
+            setRefreshLoading(false);
+        }
+    };
 
     useEffect(() => {
         const loadBoardData = async () => {
@@ -431,6 +498,7 @@ const BoardDetail = () => {
                 }
             } catch (error) {
                 console.error('Failed to load board data:', error);
+                toast.error('Failed to load board data');
             } finally {
                 setLoading(false);
             }
@@ -438,52 +506,6 @@ const BoardDetail = () => {
 
         loadBoardData();
     }, [boardId]);
-
-    const fetchTeamMembers = async (teamId) => {
-        if (!teamId) return;
-        try {
-            const response = await api.get(`team/${teamId}/members`);
-            const members = [
-                { value: '00000000-0000-0000-0000-000000000000', label: 'Unassigned' },
-                ...response.data.map((m) => ({ value: m.id, label: m.userName }))
-            ];
-            setTeamMembers(members);
-        } catch (error) {
-            console.error('Failed to fetch team members:', error);
-        }
-    };
-
-    const fetchBoardColumns = async () => {
-        try {
-            const columnsResponse = await api.get(`board-column/board/${boardId}`);
-            const sortedColumns = columnsResponse.data.sort((a, b) => a.order - b.order);
-            setColumns(sortedColumns);
-            setOriginalColumns([...sortedColumns]);
-            return sortedColumns;
-        } catch (error) {
-            console.error('Failed to fetch board columns:', error);
-            setColumns([]);
-            setOriginalColumns([]);
-            return [];
-        }
-    };
-
-    const fetchBoardData = async () => {
-        setLoading(true);
-        try {
-            const boardResponse = await api.get(`board/${boardId}`);
-            setBoard(boardResponse.data);
-            setJobs(boardResponse.data.jobs);
-            if (selectedJob) {
-                const newSelectedJob = boardResponse.data.jobs.find(job => job.id === selectedJob.id);
-                setSelectedJob(newSelectedJob || null);
-            }
-        } catch (error) {
-            console.error('Failed to fetch board data:', error);
-        } finally {
-            setLoading(false);
-        }
-    };
 
     const getJobsForColumn = (column) => {
         return jobs.filter(job => job.columnId === column.id);
@@ -493,7 +515,10 @@ const BoardDetail = () => {
         try {
             if (deleteJob) {
                 await api.delete(`job/${jobId}`);
-                fetchBoardData();
+                setJobs(prev => prev.filter(j => j.id !== jobId));
+                if (selectedJob?.id === jobId) {
+                    setSelectedJob(null);
+                }
                 return;
             }
 
@@ -501,7 +526,14 @@ const BoardDetail = () => {
             if (!job || !newColumnId) return;
 
             await api.post(`job/${jobId}/move-to-column/${newColumnId}`);
-            fetchBoardData();
+            setJobs(prev =>
+                prev.map(j =>
+                    j.id === jobId ? { ...j, columnId: newColumnId, status: columns.find(c => c.id === newColumnId)?.name || j.status } : j
+                )
+            );
+            if (selectedJob?.id === jobId) {
+                setSelectedJob(prev => ({ ...prev, columnId: newColumnId, status: columns.find(c => c.id === newColumnId)?.name || prev.status }));
+            }
 
         } catch (err) {
             console.error('Failed to update job:', err);
@@ -516,31 +548,28 @@ const BoardDetail = () => {
         setSelectedJob(updatedJob);
     };
 
-    const moveColumnVisually = (fromIndex, toIndex) => {
+    const moveColumnVisually = (fromIndex, toIndex, callback) => {
         const updatedColumns = [...columns];
         const [movedItem] = updatedColumns.splice(fromIndex, 1);
         updatedColumns.splice(toIndex, 0, movedItem);
         setColumns(updatedColumns);
+        callback(updatedColumns);
     };
 
-    const handleColumnDragEnd = async () => {
+    const handleColumnDragEnd = async (updatedColumns) => {
         try {
-            const columnIds = columns.map(column => column.id);
-            await api.post('board-column/reorder', {
+            const columnIds = updatedColumns.map(column => column.id);
+            const payload = {
                 boardId: boardId,
-                columnIds: columnIds
-            });
-            setOriginalColumns([...columns]);
+                columnIds: columnIds,
+            };
+            await api.post(`board-column/${boardId}/reorder`, payload);
+            setOriginalColumns([...updatedColumns]);
         } catch (error) {
             console.error('Failed to reorder columns:', error);
             message.error('Failed to update column order');
             setColumns([...originalColumns]);
         }
-    };
-
-    const handleColumnCreated = () => {
-        fetchBoardColumns();
-        fetchBoardData();
     };
 
     const handleColumnEdit = (column) => {
@@ -549,12 +578,6 @@ const BoardDetail = () => {
             return;
         }
         setSelectedColumn(column);
-    };
-
-    const handleColumnUpdated = () => {
-        setSelectedColumn(null);
-        fetchBoardColumns();
-        fetchBoardData();
     };
 
     const handleColumnDelete = (columnId) => {
@@ -599,7 +622,6 @@ const BoardDetail = () => {
     const handleJobCreated = (newJob) => {
         if (!newJob) return;
         setJobs(currentJobs => {
-            // Check if job already exists
             if (currentJobs.some(job => job.id === newJob.id)) {
                 return currentJobs.map(job =>
                     job.id === newJob.id ? newJob : job
@@ -608,7 +630,6 @@ const BoardDetail = () => {
                 return [...currentJobs, newJob];
             }
         });
-        // Update board data if necessary
         if (board) {
             setBoard({
                 ...board,
@@ -622,46 +643,78 @@ const BoardDetail = () => {
         setJobs(currentJobs =>
             currentJobs.map(job => job.id === updatedJob.id ? updatedJob : job)
         );
-        // If this job is selected, update it there too
         if (selectedJob && selectedJob.id === updatedJob.id) {
             setSelectedJob(updatedJob);
         }
     };
-
-    useEffect(() => { fetchBoardData(); }, [boardId]);
-    useEffect(() => { if (board?.teamId) fetchTeamMembers(); }, [board?.teamId]);
-
-    if (loading) return <Spin size="large" />;
 
     const columnOptions = columns.map(column => ({
         value: column.id,
         label: column.name
     })) || [];
 
+    const handleColumnCreated = (newColumn) => {
+        if (!newColumn) return;
+        setColumns(prev => {
+            if (prev.some(col => col.id === newColumn.id)) {
+                return prev.map(col => col.id === newColumn.id ? newColumn : col);
+            }
+            return [...prev, { ...newColumn, order: prev.length }];
+        });
+        setOriginalColumns(prev => {
+            if (prev.some(col => col.id === newColumn.id)) {
+                return prev.map(col => col.id === newColumn.id ? newColumn : col);
+            }
+            return [...prev, { ...newColumn, order: prev.length }];
+        });
+    };
+
+    const handleColumnUpdated = (updatedColumn) => {
+        if (!updatedColumn) return;
+        setColumns(prev =>
+            prev.map(col => (col.id === updatedColumn.id ? { ...col, ...updatedColumn } : col))
+        );
+        setOriginalColumns(prev =>
+            prev.map(col => (col.id === updatedColumn.id ? { ...col, ...updatedColumn } : col))
+        );
+        setSelectedColumn(null);
+    };
+
+    if (loading) return <Spin size="large" />;
+
     return (
         <AppLayout>
             <DndProvider backend={HTML5Backend}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
-                    <div style={{ display: 'flex', alignItems: 'center' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}> 
                         <Link to={`/teams/${board?.teamId}`}>
-                            <Button type="text" icon={<ArrowLeftOutlined />} style={{ marginRight: 10 }}>Back</Button>
+                            <Button type="text" icon={<ArrowLeftOutlined />}>Back</Button>
                         </Link>
+
                         <Title level={2} style={{ margin: 0 }}>{board?.name}</Title>
                     </div>
-                    <div>
+                    <div style={{ display: 'flex', gap: 8 }}> 
+                        <Button
+                            icon={<ReloadOutlined />}
+                            onClick={handleRefresh}
+                            loading={refreshLoading}
+                            disabled={loading || refreshLoading}
+                        >
+                            Refresh
+                        </Button>
                         <DynamicForm
                             formTitle="Create Column"
                             schemaName="BoardColumnCreate"
-                            apiUrl="board-column"
+                            apiUrl={`board-column/${board?.id}`}
                             type="post"
                             onSuccess={handleColumnCreated}
-                            trigger={<Button icon={<PlusOutlined />} style={{ marginRight: 8 }}>Add Column</Button>}
+                            trigger={<Button icon={<PlusOutlined />}>Add Column</Button>}
                             neededData={{ boardId }}
                         />
                         <DynamicForm
                             formTitle="Create Job"
                             schemaName="JobCreate"
-                            apiUrl="job"
+                            apiUrl={`job/${board?.teamId}`}
                             type="post"
                             onSuccess={handleJobCreated}
                             trigger={<Button type="primary" icon={<PlusOutlined />}>Create Job</Button>}
@@ -671,6 +724,7 @@ const BoardDetail = () => {
                                 "Assigned Member": teamMembers
                             }}
                         />
+
                     </div>
                 </div>
 

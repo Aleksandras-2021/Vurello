@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using PSK.Server.Authorization;
 using PSK.Server.Data.Entities;
 using PSK.Server.Specifications.BoardSpecifications;
 
@@ -8,29 +9,24 @@ namespace PSK.Controllers
     [Authorize]
     [ApiController]
     [Route("api/board")]
-    public class BoardController : GenericController<Board, BoardCreate, BoardUpdate>
+    public class BoardController : ControllerBase
     {
         private readonly IBoardService _boardService;
-        public BoardController(IBoardService service) : base(service)
+        public BoardController(IBoardService service)
         {
             _boardService = service;
         }
 
-        [HttpGet]
-        public async Task<IActionResult> GetAll()
+        [HttpGet("{boardId}")]
+        [BelongsToTeam]
+        public async Task<IActionResult> GetById(Guid boardId)
         {
-            var boards = await _boardService.GetAllAsync(new GetAllBoardsSpec());
-            return Ok(boards);
-        }
-
-        [HttpGet("{id}")]
-        public async Task<IActionResult> GetById(Guid id)
-        {
-            var board = await _boardService.GetSingleAsync(new GetBoardByIdSpec(id));
+            var board = await _boardService.GetSingleAsync(new GetBoardByIdSpec(boardId));
             return Ok(board);
         }
 
-        [HttpPost("with-columns")]
+        [HttpPost("{teamId}/with-columns")]
+        [HasPermission(PermissionName.Board)]
         public async Task<IActionResult> CreateWithColumns([FromBody] BoardCreate create)
         {
             if (!ModelState.IsValid)
@@ -38,22 +34,36 @@ namespace PSK.Controllers
                 return BadRequest(ModelState);
             }
 
-            var isAuthorized = await _boardService.AuthorizeAsync(create, User);
-
-            if (!isAuthorized)
-            {
-                return Forbid();
-            }
-
-            await _boardService.CreateBoardWithDefaultColumnsAsync(create);
-            return NoContent();
+            var board = await _boardService.CreateBoardWithDefaultColumnsAsync(create);
+            return Ok(board);
         }
 
-        [ApiExplorerSettings(IgnoreApi = true)]
-        [NonAction]
-        public new Task<IActionResult> Create([FromBody] BoardCreate create)
+        [HttpPatch("{boardId}")]
+        [HasPermission(PermissionName.Board)]
+        public async Task<IActionResult> Update(Guid boardId, [FromBody] BoardUpdate update)
         {
-            return CreateWithColumns(create);
+
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+            var updated = await _boardService.UpdateAsync(boardId, update);
+            if (updated == null)
+            {
+                return NotFound();
+            }
+
+            return Ok(updated);
+        }
+
+        [HttpDelete("{boardId}")]
+        [HasPermission(PermissionName.Board)]
+        public async Task<IActionResult> Delete(Guid boardId)
+        {
+            await _boardService.DeleteAsync(boardId);
+
+            return NoContent();
         }
     }
 }

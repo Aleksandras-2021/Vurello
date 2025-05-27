@@ -8,6 +8,8 @@ namespace PSK.Server.Specifications.TeamSpecifications
         public GetTeamMembersByIdSpec(Guid teamId)
         {
             Query.Where(t => t.Id == teamId)
+                 .Include(t => t.Users)
+                    .ThenInclude(u => u.UserTeamRoles.Where(r => r.TeamId == teamId))
                  .SelectMany(t => t.Users);
         }
     }

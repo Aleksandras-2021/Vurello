@@ -14,10 +14,15 @@ namespace PSK.Server.Data
         public DbSet<Invitation> Invitations { get; set; }
         public DbSet<Job> Jobs { get; set; }
         public DbSet<Label> Labels { get; set; }
+        public DbSet<Role> Roles { get; set; }
+        public DbSet<UserTeamRole> UserTeamRoles { get; set; }
         public DbSet<JobHistory> JobHistories { get; set; }
+        public DbSet<UserComment> Comments { get; set; }
+        public DbSet<BoardColumn> BoardColumns { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
+
             modelBuilder.Entity<Team>()
                 .HasKey(t => t.Id);
 
@@ -36,8 +41,9 @@ namespace PSK.Server.Data
                 .OnDelete(DeleteBehavior.Restrict);
 
             modelBuilder.Entity<Team>()
-                .HasMany(t => t.Users)
-                .WithMany(u => u.Teams);
+                .Property(t => t.Version)
+                .HasColumnName("xmin")
+                .IsRowVersion();
 
             modelBuilder.Entity<Board>()
                 .HasKey(b => b.Id);
@@ -50,6 +56,13 @@ namespace PSK.Server.Data
                 .HasOne(b => b.Team)
                 .WithMany(t => t.Boards)
                 .HasForeignKey(b => b.TeamId);
+
+
+            modelBuilder.Entity<Board>()
+                .Property(b => b.Version)
+                .HasColumnName("xmin")
+                .IsRowVersion();
+
 
             modelBuilder.Entity<Job>()
                 .HasKey(j => j.Id);
@@ -68,6 +81,7 @@ namespace PSK.Server.Data
                 .WithMany(a => a.AssignedJobs)
                 .HasForeignKey(t => t.AssignedMemberId);
 
+
             modelBuilder.Entity<JobHistory>()
                 .HasKey(jh => jh.Id);
 
@@ -84,6 +98,11 @@ namespace PSK.Server.Data
                 .HasOne(jh => jh.User)
                 .WithMany()
                 .HasForeignKey(jh => jh.UserId);
+
+            modelBuilder.Entity<Job>()
+                .Property(j => j.Version)
+                .HasColumnName("xmin")
+                .IsRowVersion();
 
             modelBuilder.Entity<Invitation>()
                 .HasKey(i => i.Id);
@@ -107,6 +126,7 @@ namespace PSK.Server.Data
                 .WithMany()
                 .HasForeignKey(i => i.TeamId);
 
+
             modelBuilder.Entity<Label>()
                 .HasKey(i => i.Id);
 
@@ -123,25 +143,98 @@ namespace PSK.Server.Data
                 .HasMany(j => j.Jobs)
                 .WithMany(l => l.Labels);
 
-            modelBuilder.Entity<Team>()
-                .Property(t => t.Version)
-                .HasColumnName("xmin")
-                .IsRowVersion();
-
-            modelBuilder.Entity<Board>()
-                .Property(b => b.Version)
-                .HasColumnName("xmin")
-                .IsRowVersion();
-
-            modelBuilder.Entity<Job>()
-                .Property(j => j.Version)
-                .HasColumnName("xmin")
-                .IsRowVersion();
-
             modelBuilder.Entity<Label>()
                 .Property(l => l.Version)
                 .HasColumnName("xmin")
                 .IsRowVersion();
+
+
+            modelBuilder.Entity<Role>()
+                .HasKey(r => r.Id);
+
+            modelBuilder.Entity<Role>()
+                .Property(r => r.Id)
+                .HasDefaultValueSql("gen_random_uuid()");
+
+            modelBuilder.Entity<Role>()
+                .Property(r => r.Version)
+                .HasColumnName("xmin")
+                .IsRowVersion();
+
+            modelBuilder.Entity<Role>()
+                .HasMany(r => r.Permissions)
+                .WithMany(p => p.Roles);
+
+            modelBuilder.Entity<Role>()
+                .HasOne(r => r.Team)
+                .WithMany(t => t.Roles)
+                .HasForeignKey(r => r.TeamId);
+
+            modelBuilder.Entity<Permission>()
+                .HasKey(p => p.Id);
+
+            modelBuilder.Entity<Permission>().HasData(
+                new Permission { Id = Guid.Parse("00000000-0000-0000-0000-000000000001"), Name = "Job", Description = "Allow creating, editing, deleting jobs" },
+                new Permission { Id = Guid.Parse("00000000-0000-0000-0000-000000000002"), Name = "Board", Description = "Allow creating, editing, deleting board" },
+                new Permission { Id = Guid.Parse("00000000-0000-0000-0000-000000000003"), Name = "Labels", Description = "Allow creating, editing, deleting labels" },
+                new Permission { Id = Guid.Parse("00000000-0000-0000-0000-000000000004"), Name = "Roles", Description = "Allow creating, editing, deleting roles and assign roles to users" },
+                new Permission { Id = Guid.Parse("00000000-0000-0000-0000-000000000005"), Name = "TeamUsers", Description = "Allow inviting and removing users from team" },
+                new Permission { Id = Guid.Parse("00000000-0000-0000-0000-000000000006"), Name = "Team", Description = "Allow to edit and delete team" }
+            );
+
+
+            modelBuilder.Entity<UserTeamRole>()
+                .HasKey(utr => new { utr.UserId, utr.TeamId });
+
+            modelBuilder.Entity<UserTeamRole>()
+                .HasOne(utr => utr.User)
+                .WithMany(u => u.UserTeamRoles)
+                .HasForeignKey(utr => utr.UserId);
+
+            modelBuilder.Entity<UserTeamRole>()
+                .HasOne(utr => utr.Team)
+                .WithMany(t => t.UserTeamRoles)
+                .HasForeignKey(utr => utr.TeamId);
+
+            modelBuilder.Entity<UserTeamRole>()
+                .HasOne(utr => utr.Role)
+                .WithMany(r => r.UserTeamRoles)
+                .HasForeignKey(utr => utr.RoleId);
+
+
+            modelBuilder.Entity<UserComment>()
+                .HasKey(r => r.Id);
+
+            modelBuilder.Entity<UserComment>()
+                .Property(r => r.Id)
+                .HasDefaultValueSql("gen_random_uuid()");
+
+            modelBuilder.Entity<UserComment>()
+                .HasOne(r => r.Job)
+                .WithMany(t => t.Comments)
+                .HasForeignKey(r => r.JobId);
+
+            modelBuilder.Entity<UserComment>()
+                .HasOne(r => r.Creator)
+                .WithMany(t => t.Comments)
+                .HasForeignKey(r => r.CreatorId);
+
+            modelBuilder.Entity<BoardColumn>()
+                .HasKey(r => r.Id);
+
+            modelBuilder.Entity<BoardColumn>()
+                .Property(r => r.Id)
+                .HasDefaultValueSql("gen_random_uuid()");
+
+            modelBuilder.Entity<BoardColumn>()
+                .HasOne(r => r.Board)
+                .WithMany(t => t.Columns)
+                .HasForeignKey(r => r.BoardId);
+
+            modelBuilder.Entity<BoardColumn>()
+                .HasMany(r => r.Jobs)
+                .WithOne(t => t.Column)
+                .HasForeignKey(r => r.ColumnId);
 
             base.OnModelCreating(modelBuilder);
         }
