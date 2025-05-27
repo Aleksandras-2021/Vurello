@@ -5,7 +5,7 @@ namespace PSK.Server.Specifications.JobSpecifications
 {
     public class GetJobByIdSpec : Specification<Job>, ISingleResultSpecification<Job>
     {
-        public GetJobByIdSpec(Guid jobId) 
+        public GetJobByIdSpec(Guid jobId)
         {
             Query
                 .Where(j => j.Id == jobId)
