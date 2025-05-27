@@ -313,6 +313,35 @@ namespace PSK.Server.Migrations
                     b.ToTable("Jobs");
                 });
 
+            modelBuilder.Entity("PSK.Server.Data.Entities.JobHistory", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasDefaultValueSql("gen_random_uuid()");
+
+                    b.Property<string>("ChangeMessage")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<Guid>("JobId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("Timestamp")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("JobId");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("JobHistories");
+                });
+
             modelBuilder.Entity("PSK.Server.Data.Entities.Label", b =>
                 {
                     b.Property<Guid>("Id")
@@ -593,6 +622,25 @@ namespace PSK.Server.Migrations
                     b.Navigation("Column");
                 });
 
+            modelBuilder.Entity("PSK.Server.Data.Entities.JobHistory", b =>
+                {
+                    b.HasOne("PSK.Server.Data.Entities.Job", "Job")
+                        .WithMany("JobHistories")
+                        .HasForeignKey("JobId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("PSK.Server.Data.Entities.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Job");
+
+                    b.Navigation("User");
+                });
+
             modelBuilder.Entity("PSK.Server.Data.Entities.Label", b =>
                 {
                     b.HasOne("PSK.Server.Data.Entities.Team", "Team")
@@ -639,6 +687,11 @@ namespace PSK.Server.Migrations
             modelBuilder.Entity("PSK.Server.Data.Entities.BoardColumn", b =>
                 {
                     b.Navigation("Jobs");
+                });
+
+            modelBuilder.Entity("PSK.Server.Data.Entities.Job", b =>
+                {
+                    b.Navigation("JobHistories");
                 });
 
             modelBuilder.Entity("PSK.Server.Data.Entities.Team", b =>

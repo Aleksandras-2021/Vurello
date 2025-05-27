@@ -7,7 +7,6 @@ import { useAuth } from '../components/AuthContext';
 import { api } from "../components/API"
 import { useAppContext } from '../components/AppContext';
 import AppLayout from '../components/AppLayout';
-import {EntityList} from "../components/EntityList.tsx";
 import { mergeEntities } from '../utils/stateHelpers.ts'; // Import our utility function
 
 const { Title } = Typography;

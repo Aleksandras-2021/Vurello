@@ -14,7 +14,7 @@ namespace PSK.Server.Data
         public DbSet<Invitation> Invitations { get; set; }
         public DbSet<Job> Jobs { get; set; }
         public DbSet<Label> Labels { get; set; }
-
+        public DbSet<JobHistory> JobHistories { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -51,7 +51,6 @@ namespace PSK.Server.Data
                 .WithMany(t => t.Boards)
                 .HasForeignKey(b => b.TeamId);
 
-
             modelBuilder.Entity<Job>()
                 .HasKey(j => j.Id);
 
@@ -68,7 +67,23 @@ namespace PSK.Server.Data
                 .HasOne(j => j.AssignedMember)
                 .WithMany(a => a.AssignedJobs)
                 .HasForeignKey(t => t.AssignedMemberId);
-                
+
+            modelBuilder.Entity<JobHistory>()
+                .HasKey(jh => jh.Id);
+
+            modelBuilder.Entity<JobHistory>()
+                .Property(jh => jh.Id)
+                .HasDefaultValueSql("gen_random_uuid()");
+
+            modelBuilder.Entity<JobHistory>()
+                .HasOne(jh => jh.Job)
+                .WithMany(j => j.JobHistories)
+                .HasForeignKey(jh => jh.JobId);
+
+            modelBuilder.Entity<JobHistory>()
+                .HasOne(jh => jh.User)
+                .WithMany()
+                .HasForeignKey(jh => jh.UserId);
 
             modelBuilder.Entity<Invitation>()
                 .HasKey(i => i.Id);
@@ -91,8 +106,6 @@ namespace PSK.Server.Data
                 .HasOne(i => i.Team)
                 .WithMany()
                 .HasForeignKey(i => i.TeamId);
-
-
 
             modelBuilder.Entity<Label>()
                 .HasKey(i => i.Id);
@@ -130,9 +143,7 @@ namespace PSK.Server.Data
                 .HasColumnName("xmin")
                 .IsRowVersion();
 
-
             base.OnModelCreating(modelBuilder);
         }
-
     }
 }

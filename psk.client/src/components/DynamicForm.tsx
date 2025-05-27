@@ -185,7 +185,9 @@ const DynamicForm: React.FC<DynamicFormProps> = ({
             const response = await api[method](apiUrl, fullData);
             const updatedEntity = response.data;
 
-            toast.success(`${formTitle || 'Form'} ${type === 'patch' || type === 'put' ? 'updated' : 'created'} successfully`);
+            if (apiUrl.includes('invitation')) {
+              toast.success('Invitation sent successfully')
+            }
             onSuccess?.(updatedEntity);
             handleCloseModal();
         } catch (error: any) {
@@ -207,7 +209,6 @@ const DynamicForm: React.FC<DynamicFormProps> = ({
                 }
             } else {
                 console.error("Form submission error:", error);
-                toast.error(error?.response?.data?.message || "Submission failed: Invalid data.");
             }
         } finally {
             setLoading(false);

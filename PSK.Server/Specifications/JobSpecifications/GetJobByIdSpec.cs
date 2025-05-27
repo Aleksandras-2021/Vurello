@@ -9,7 +9,9 @@ namespace PSK.Server.Specifications.JobSpecifications
         {
             Query
                 .Where(j => j.Id == jobId)
-                .Include(j => j.Labels);
+                .Include(j => j.Labels)
+                .Include(j => j.JobHistories)
+                .ThenInclude(jh => jh.User);
         }
     }
 }

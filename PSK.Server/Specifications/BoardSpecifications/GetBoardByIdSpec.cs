@@ -10,9 +10,12 @@ namespace PSK.Server.Specifications.BoardSpecifications
             Query
                 .Where(b => b.Id == boardId)
                 .Include(b => b.Team) 
-                    .ThenInclude(t => t.Labels)
+                .ThenInclude(t => t.Labels)
                 .Include(b => b.Jobs)
-                    .ThenInclude(j => j.Labels); 
+                .ThenInclude(j => j.Labels)
+                .Include(b => b.Jobs)
+                .ThenInclude(j => j.JobHistories)
+                .ThenInclude(jh => jh.User);
         }
     }
 }

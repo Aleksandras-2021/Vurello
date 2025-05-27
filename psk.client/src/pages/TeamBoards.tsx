@@ -65,7 +65,6 @@ const TeamBoards = () => {
     const handleDeleteTeam = async () => {
         try {
             await api.delete(`team/${teamId}`);
-            toast.success('Team deleted successfully');
             navigate('/teams');
         } catch (error) {
             console.error('Failed to delete team:', error);
@@ -75,7 +74,6 @@ const TeamBoards = () => {
     const handleDeleteBoard = async (boardId: string) => {
         try {
             await api.delete(`board/${boardId}`);
-            toast.success('Board deleted successfully');
             fetchTeam();
         } catch (error) {
             console.error('Failed to delete board:', error);
@@ -85,7 +83,6 @@ const TeamBoards = () => {
     const handleRemoveMember = async (memberId: string) => {
         try {
             await api.delete(`team/${teamId}/members/${memberId}`);
-            toast.success('Member removed successfully');
             fetchMembers();
         } catch (error) {
             console.error('Failed to remove member:', error);
@@ -126,7 +123,6 @@ const TeamBoards = () => {
             const response = await api.get(`team/${teamId}/contributions`);
             setContributions(response.data);
             localStorage.setItem(`team_${teamId}_contributions`, JSON.stringify(response.data));
-            toast.success("Contributions refreshed");
         } catch (error) {
             toast.error("Failed to load contributions");
             console.error('Contributions error:', error);

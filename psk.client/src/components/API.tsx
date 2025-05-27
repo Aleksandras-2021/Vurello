@@ -94,11 +94,17 @@ export const getTeamMembers = async (teamId: string) => {
 }
 
 export const inviteUserToTeam = async (teamId: string, username: string) => {
+  try {
     const response = await api.post('invitation', {
         recipientUsername: username,
         teamId
     });
+    toast.success('Invitation sent successfully');
     return response.data;
+  }
+  catch (error){
+    throw error;
+  }
 };
 
 export const getUserInvitations = async () => {

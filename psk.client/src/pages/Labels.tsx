@@ -131,7 +131,6 @@ const Labels: React.FC = () => {
                 setJobsModalVisible(false);
             }
 
-            toast.success('Label deleted successfully');
         } catch (error) {
             console.error('Failed to delete label:', error);
             toast.error('Failed to delete label');

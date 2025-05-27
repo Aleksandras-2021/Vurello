@@ -155,18 +155,18 @@ const DraggableJobCard = ({ job, teamMembers, onDrop, boardId, setSelectedJob })
 };
 
 const DraggableColumn = ({
-    column,
-    jobs,
-    onDrop,
-    teamMembers,
-    boardId,
-    setSelectedJob,
-    index,
-    moveColumnVisually,
-    onColumnDragEnd,
-    onColumnEdit,
-    onColumnDelete
-}) => {
+                             column,
+                             jobs,
+                             onDrop,
+                             teamMembers,
+                             boardId,
+                             setSelectedJob,
+                             index,
+                             moveColumnVisually,
+                             onColumnDragEnd,
+                             onColumnEdit,
+                             onColumnDelete
+                         }) => {
     const dragRef = React.useRef(null);
 
     const [{ isDragging }, drag] = useDrag(() => ({
@@ -307,9 +307,7 @@ const DraggableColumn = ({
     );
 };
 
-
-
- const ColumnMoveModal = ({ visible, onCancel, onMove, columns, columnToDelete }) => {
+const ColumnMoveModal = ({ visible, onCancel, onMove, columns, columnToDelete }) => {
     const [targetColumnId, setTargetColumnId] = useState(null);
 
     const filteredColumns = columns.filter(column => column.id !== columnToDelete);
@@ -357,13 +355,12 @@ const BoardDetail = () => {
     const [jobs, setJobs] = useState([]);
     const [loading, setLoading] = useState(true);
     const [teamMembers, setTeamMembers] = useState([]);
-    const [selectedJob, setSelectedJob] = useState(null);
+    const [selectedJob, setSelectedJob] = useState(null); // Fixed: changed from selectedJobDetails to selectedJob
     const [columns, setColumns] = useState([]);
-    const [originalColumns, setOriginalColumns] = useState([]); 
+    const [originalColumns, setOriginalColumns] = useState([]);
     const [selectedColumn, setSelectedColumn] = useState(null);
     const [isDeleteModalVisible, setIsDeleteModalVisible] = useState(false);
     const [columnToDelete, setColumnToDelete] = useState(null);
-
 
     useEffect(() => {
         const loadBoardData = async () => {
@@ -415,7 +412,7 @@ const BoardDetail = () => {
             const columnsResponse = await api.get(`board-column/board/${boardId}`);
             const sortedColumns = columnsResponse.data.sort((a, b) => a.order - b.order);
             setColumns(sortedColumns);
-            setOriginalColumns([...sortedColumns]); 
+            setOriginalColumns([...sortedColumns]);
             return sortedColumns;
         } catch (error) {
             console.error('Failed to fetch board columns:', error);
@@ -450,7 +447,6 @@ const BoardDetail = () => {
         try {
             if (deleteJob) {
                 await api.delete(`job/${jobId}`);
-                toast.success("Job deleted successfully");
                 fetchBoardData();
                 return;
             }
@@ -459,7 +455,6 @@ const BoardDetail = () => {
             if (!job || !newColumnId) return;
 
             await api.post(`job/${jobId}/move-to-column/${newColumnId}`);
-            toast.success("Job moved successfully");
             fetchBoardData();
 
         } catch (err) {
@@ -490,7 +485,6 @@ const BoardDetail = () => {
                 columnIds: columnIds
             });
             setOriginalColumns([...columns]);
-            toast.success("Column order updated");
         } catch (error) {
             console.error('Failed to reorder columns:', error);
             message.error('Failed to update column order');
@@ -542,7 +536,6 @@ const BoardDetail = () => {
                 endpoint += `?targetColumnId=${targetColumnId}`;
             }
             await api.delete(endpoint);
-            toast.success("Column deleted successfully");
             fetchBoardColumns();
             fetchBoardData();
         } catch (error) {
@@ -609,30 +602,30 @@ const BoardDetail = () => {
                         </Link>
                         <Title level={2} style={{ margin: 0 }}>{board?.name}</Title>
                     </div>
-                <div>
-                    <DynamicForm
-                        formTitle="Create Column"
-                        schemaName="BoardColumnCreate"
-                        apiUrl="board-column"
-                        type="post"
-                        onSuccess={handleColumnCreated}
-                        trigger={<Button icon={<PlusOutlined />} style={{ marginRight: 8 }}>Add Column</Button>}
-                        neededData={{ boardId }}
-                    />
-                    <DynamicForm
-                        formTitle="Create Job"
-                        schemaName="JobCreate"
-                        apiUrl="job"
-                        type="post"
-                        onSuccess={handleJobCreated}
-                        trigger={<Button type="primary" icon={<PlusOutlined />}>Create Job</Button>}
-                        neededData={{ boardId }}
-                        dropdownOptions={{
-                            "Column": columnOptions,
-                            "Assigned Member": teamMembers
-                        }}
-                    />
-                  </div>
+                    <div>
+                        <DynamicForm
+                            formTitle="Create Column"
+                            schemaName="BoardColumnCreate"
+                            apiUrl="board-column"
+                            type="post"
+                            onSuccess={handleColumnCreated}
+                            trigger={<Button icon={<PlusOutlined />} style={{ marginRight: 8 }}>Add Column</Button>}
+                            neededData={{ boardId }}
+                        />
+                        <DynamicForm
+                            formTitle="Create Job"
+                            schemaName="JobCreate"
+                            apiUrl="job"
+                            type="post"
+                            onSuccess={handleJobCreated}
+                            trigger={<Button type="primary" icon={<PlusOutlined />}>Create Job</Button>}
+                            neededData={{ boardId }}
+                            dropdownOptions={{
+                                "Column": columnOptions,
+                                "Assigned Member": teamMembers
+                            }}
+                        />
+                    </div>
                 </div>
 
                 <Row gutter={16}>

@@ -75,7 +75,6 @@ const MoveJobBoardModal: React.FC<MoveJobBoardModalProps> = ({
         setLoading(true);
         try {
             await api.post(`job/${job.id}/move-to-board/${targetBoardId}`);
-            toast.success('Job moved to new board successfully');
             onSuccess();
             onCancel();
         } catch (error: any) {

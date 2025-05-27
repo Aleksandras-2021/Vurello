@@ -39,7 +39,6 @@ const UserInbox: React.FC = () => {
                 headers: { 'Content-Type': 'application/json' }
             });
 
-            toast.success(`Invitation ${accept ? 'accepted' : 'declined'} successfully`);
             fetchInvitations();
 
             if (accept) {

@@ -41,7 +41,14 @@ namespace PSK.Controllers
         [HttpPut("{jobId}/labels")]
         public async Task<IActionResult> UpdateLabels(Guid jobId, [FromBody] UpdateLabels labels)
         {
+            // Get the job with its current labels loaded
             var job = await _jobService.GetSingleAsync(new GetJobByIdSpec(jobId));
+            
+            if (job == null)
+            {
+                return NotFound();
+            }
+
             await _jobService.UpdateLabels(job, labels);
 
             return Ok();

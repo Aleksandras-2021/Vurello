@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { Modal, Tabs, Button } from 'antd';
-import { SwapOutlined } from '@ant-design/icons';
+import { Modal, Tabs, Button, List, Typography, Empty } from 'antd';
+import { SwapOutlined, ClockCircleOutlined, UserOutlined } from '@ant-design/icons';
 import DynamicForm from '../components/DynamicForm';
 import MoveJobBoardModal from '../components/MoveJobBoardModal';
 import { api } from "../components/API";
 import { RJSFSchema, UiSchema } from '@rjsf/utils';
+
+const { Text } = Typography;
 
 interface JobDetailProps {
     open: boolean;
@@ -18,44 +20,67 @@ interface JobDetailProps {
 }
 
 const JobDetail: React.FC<JobDetailProps> = ({
-    open,
-    onCancel,
-    job,
-    labels,
-    teamId,
-    teamMembers,
-    onSuccess,
-    updateJob
-}) => {
+                                                 open,
+                                                 onCancel,
+                                                 job,
+                                                 labels,
+                                                 teamId,
+                                                 teamMembers,
+                                                 onSuccess,
+                                                 updateJob
+                                             }) => {
     const [activeTab, setActiveTab] = useState('1');
     const [boardId, setBoardId] = useState<string>("");
     const [columns, setColumns] = useState<any[]>([]);
     const [loading, setLoading] = useState(false);
     const [moveModalVisible, setMoveModalVisible] = useState(false);
+    const [currentJob, setCurrentJob] = useState(job);
 
     const handleTabChange = (key: string) => {
         setActiveTab(key);
     };
 
+    // Fetch latest job data when modal opens or when switching to history tab
+    const fetchLatestJobData = async () => {
+        try {
+            const response = await api.get(`job/${job.id}`);
+            setCurrentJob(response.data);
+            updateJob(response.data);
+        } catch (error) {
+            console.error('Failed to fetch latest job data:', error);
+        }
+    };
+
     const handleJobUpdated = (updatedJob: any) => {
         if (!updatedJob) return;
+        setCurrentJob(updatedJob);
         updateJob(updatedJob);
+        // Optionally fetch latest data to get updated history
+        if (activeTab === '3') {
+            fetchLatestJobData();
+        }
     };
 
     const handleLabelsUpdated = (response: any) => {
         if (!response) return;
 
         const updatedJob = {
-            ...job,
-            labels: response.labels || job.labels,
+            ...currentJob,
+            labels: response.labels || currentJob.labels,
             version: response.version
         };
 
+        setCurrentJob(updatedJob);
         updateJob(updatedJob);
+        // Optionally fetch latest data to get updated history
+        if (activeTab === '3') {
+            fetchLatestJobData();
+        }
     };
 
     const handleConflictCancelled = (latestData?: any) => {
         if (latestData) {
+            setCurrentJob(latestData);
             updateJob(latestData);
         }
     };
@@ -65,6 +90,18 @@ const JobDetail: React.FC<JobDetailProps> = ({
         onSuccess();
         onCancel();
     };
+
+    // Update current job when prop changes
+    useEffect(() => {
+        setCurrentJob(job);
+    }, [job]);
+
+    // Fetch latest data when switching to history tab
+    useEffect(() => {
+        if (activeTab === '3' && open) {
+            fetchLatestJobData();
+        }
+    }, [activeTab, open]);
 
     useEffect(() => {
         setBoardId(job.boardId);
@@ -123,6 +160,10 @@ const JobDetail: React.FC<JobDetailProps> = ({
         },
     };
 
+    const formatTimestamp = (timestamp: string) => {
+        return new Date(timestamp).toLocaleString();
+    };
+
     const tabItems = [
         {
             key: '1',
@@ -133,16 +174,16 @@ const JobDetail: React.FC<JobDetailProps> = ({
                         <div>Loading...</div>
                     ) : (
                         <DynamicForm
-                            formTitle={`Job: ${job.name}`}
+                            formTitle={`Job: ${currentJob.name}`}
                             schemaName="JobUpdate"
-                            apiUrl={`job/${job.id}`}
+                            apiUrl={`job/${currentJob.id}`}
                             type="patch"
                             onSuccess={handleJobUpdated}
-                            currentData={job}
+                            currentData={currentJob}
                             dropdownOptions={combinedDropdownOptions}
                             noModal={true}
                             onCancelConflict={handleConflictCancelled}
-                            fetchCurrentData={() => api.get(`job/${job.id}`).then(res => res.data)}
+                            fetchCurrentData={() => api.get(`job/${currentJob.id}`).then(res => res.data)}
                         />
                     )}
                 </div>
@@ -157,16 +198,16 @@ const JobDetail: React.FC<JobDetailProps> = ({
                         formTitle=""
                         schema={labelSchema}
                         uiSchema={labelUiSchema}
-                        apiUrl={`job/${job.id}/labels`}
+                        apiUrl={`job/${currentJob.id}/labels`}
                         type="put"
                         currentData={{
-                            labels: Array.isArray(job.labels) ? job.labels.map(l => l.id).filter(id => typeof id === 'string') : [],
-                            version: job.version
+                            labels: Array.isArray(currentJob.labels) ? currentJob.labels.map(l => l.id).filter(id => typeof id === 'string') : [],
+                            version: currentJob.version
                         }}
                         onSuccess={handleLabelsUpdated}
                         noModal={true}
                         fetchCurrentData={async () => {
-                            const latestJob = await api.get(`job/${job.id}`).then(res => res.data);
+                            const latestJob = await api.get(`job/${currentJob.id}`).then(res => res.data);
                             return {
                                 labels: Array.isArray(latestJob.labels) ? latestJob.labels.map(l => l.id).filter(id => typeof id === 'string') : [],
                                 version: latestJob.version
@@ -174,6 +215,48 @@ const JobDetail: React.FC<JobDetailProps> = ({
                         }}
                         onCancelConflict={handleConflictCancelled}
                     />
+                </div>
+            ),
+        },
+        {
+            key: '3',
+            label: 'History',
+            children: (
+                <div style={{ padding: 20 }}>
+                    <div style={{ marginBottom: 16 }}>
+                        <Button onClick={fetchLatestJobData} size="small">
+                            Refresh History
+                        </Button>
+                    </div>
+                    {currentJob.jobHistories && currentJob.jobHistories.length > 0 ? (
+                        <List
+                            dataSource={currentJob.jobHistories.sort((a: any, b: any) =>
+                                new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
+                            )}
+                            renderItem={(historyItem: any) => (
+                                <List.Item>
+                                    <List.Item.Meta
+                                        avatar={<UserOutlined />}
+                                        title={
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                                                <Text strong>{historyItem.user?.userName || 'Unknown User'}</Text>
+                                                <Text type="secondary" style={{ fontSize: '12px' }}>
+                                                    <ClockCircleOutlined style={{ marginRight: 4 }} />
+                                                    {formatTimestamp(historyItem.timestamp)}
+                                                </Text>
+                                            </div>
+                                        }
+                                        description={historyItem.changeMessage}
+                                    />
+                                </List.Item>
+                            )}
+                        />
+                    ) : (
+                        <Empty
+                            description="No edit history available"
+                            style={{ marginTop: 40 }}
+                        />
+                    )}
                 </div>
             ),
         },
@@ -187,15 +270,6 @@ const JobDetail: React.FC<JobDetailProps> = ({
                 footer={null}
                 width={800}
                 style={{ top: 20 }}
-                extra={
-                    <Button
-                        icon={<SwapOutlined />}
-                        onClick={() => setMoveModalVisible(true)}
-                        style={{ marginLeft: 8 }}
-                    >
-                        Move to Board
-                    </Button>
-                }
             >
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
                     <h2 style={{ margin: 0 }}>Job Details</h2>
@@ -237,7 +311,7 @@ const JobDetail: React.FC<JobDetailProps> = ({
             <MoveJobBoardModal
                 open={moveModalVisible}
                 onCancel={() => setMoveModalVisible(false)}
-                job={job}
+                job={currentJob}
                 currentTeamId={teamId}
                 onSuccess={handleMoveSuccess}
             />
