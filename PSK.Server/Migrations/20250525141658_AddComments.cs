@@ -6,32 +6,32 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace PSK.Server.Migrations
 {
     /// <inheritdoc />
-    public partial class AddJobHistory : Migration
+    public partial class AddComments : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.CreateTable(
-                name: "JobHistories",
+                name: "UserComment",
                 columns: table => new
                 {
-                    Id = table.Column<Guid>(type: "uuid", nullable: false, defaultValueSql: "gen_random_uuid()"),
-                    ChangeMessage = table.Column<string>(type: "text", nullable: false),
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    Contents = table.Column<string>(type: "text", nullable: false),
                     JobId = table.Column<Guid>(type: "uuid", nullable: false),
-                    Timestamp = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    UserId = table.Column<Guid>(type: "uuid", nullable: false)
+                    CreatorId = table.Column<Guid>(type: "uuid", nullable: false),
+                    Version = table.Column<long>(type: "bigint", nullable: false)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_JobHistories", x => x.Id);
+                    table.PrimaryKey("PK_UserComment", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_JobHistories_AspNetUsers_UserId",
-                        column: x => x.UserId,
+                        name: "FK_UserComment_AspNetUsers_CreatorId",
+                        column: x => x.CreatorId,
                         principalTable: "AspNetUsers",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
-                        name: "FK_JobHistories_Jobs_JobId",
+                        name: "FK_UserComment_Jobs_JobId",
                         column: x => x.JobId,
                         principalTable: "Jobs",
                         principalColumn: "Id",
@@ -39,21 +39,21 @@ namespace PSK.Server.Migrations
                 });
 
             migrationBuilder.CreateIndex(
-                name: "IX_JobHistories_JobId",
-                table: "JobHistories",
-                column: "JobId");
+                name: "IX_UserComment_CreatorId",
+                table: "UserComment",
+                column: "CreatorId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_JobHistories_UserId",
-                table: "JobHistories",
-                column: "UserId");
+                name: "IX_UserComment_JobId",
+                table: "UserComment",
+                column: "JobId");
         }
 
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropTable(
-                name: "JobHistories");
+                name: "UserComment");
         }
     }
 }

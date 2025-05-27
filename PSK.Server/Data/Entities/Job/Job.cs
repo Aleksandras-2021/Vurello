@@ -15,7 +15,11 @@
         public User? AssignedMember { get; set; }
 
         public ICollection<Label> Labels { get; set; } = new List<Label>();
+
+        public ICollection<UserComment> Comments { get; set; } = new List<UserComment>();
+
         public ICollection<JobHistory> JobHistories { get; set; } = new List<JobHistory>();
+
 
         public uint Version { get; set; }
         public int ColumnPosition { get; set; } = 0;

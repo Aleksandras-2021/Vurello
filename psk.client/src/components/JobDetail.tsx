@@ -1,12 +1,15 @@
 import React, { useState, useEffect } from 'react';
-import { Modal, Tabs, Button, List, Typography, Empty } from 'antd';
+
+import { Modal, Tabs, Button, Input, List, Typography, Spin, message, Empty } from 'antd';
 import { SwapOutlined, ClockCircleOutlined, UserOutlined } from '@ant-design/icons';
+
 import DynamicForm from '../components/DynamicForm';
 import MoveJobBoardModal from '../components/MoveJobBoardModal';
 import { api } from "../components/API";
 import { RJSFSchema, UiSchema } from '@rjsf/utils';
 
-const { Text } = Typography;
+const { Title, Text } = Typography;
+
 
 interface JobDetailProps {
     open: boolean;
@@ -20,21 +23,26 @@ interface JobDetailProps {
 }
 
 const JobDetail: React.FC<JobDetailProps> = ({
-                                                 open,
-                                                 onCancel,
-                                                 job,
-                                                 labels,
-                                                 teamId,
-                                                 teamMembers,
-                                                 onSuccess,
-                                                 updateJob
-                                             }) => {
+    open,
+    onCancel,
+    job,
+    labels,
+    teamId,
+    teamMembers,
+    onSuccess,
+    updateJob
+}) => {
+
     const [activeTab, setActiveTab] = useState('1');
-    const [boardId, setBoardId] = useState<string>("");
+    const [boardId, setBoardId] = useState<string>('');
     const [columns, setColumns] = useState<any[]>([]);
     const [loading, setLoading] = useState(false);
     const [moveModalVisible, setMoveModalVisible] = useState(false);
     const [currentJob, setCurrentJob] = useState(job);
+
+    const [comments, setComments] = useState([]);
+    const [newComment, setNewComment] = useState('');
+    const [loadingComments, setLoadingComments] = useState(false);
 
     const handleTabChange = (key: string) => {
         setActiveTab(key);
@@ -63,14 +71,15 @@ const JobDetail: React.FC<JobDetailProps> = ({
 
     const handleLabelsUpdated = (response: any) => {
         if (!response) return;
-
         const updatedJob = {
             ...currentJob,
             labels: response.labels || currentJob.labels,
             version: response.version
         };
 
+
         setCurrentJob(updatedJob);
+
         updateJob(updatedJob);
         // Optionally fetch latest data to get updated history
         if (activeTab === '3') {
@@ -108,6 +117,9 @@ const JobDetail: React.FC<JobDetailProps> = ({
         if (job.boardId) {
             fetchBoardColumns(job.boardId);
         }
+        if (job.id) {
+            fetchComments();
+        }
     }, [job]);
 
     const fetchBoardColumns = async (boardId: string) => {
@@ -121,6 +133,36 @@ const JobDetail: React.FC<JobDetailProps> = ({
             setLoading(false);
         }
     };
+
+
+    const fetchComments = async () => {
+        setLoadingComments(true);
+        try {
+            const response = await api.get(`comments/job/${job.id}`);
+            setComments(response.data);
+        } catch (error) {
+            console.error('Failed to fetch comments:', error);
+            message.error("Failed to load comments.");
+        } finally {
+            setLoadingComments(false);
+        }
+    };
+
+    const postComment = async () => {
+        if (!newComment.trim()) return;
+        try {
+            const response = await api.post("comments", {
+                contents: newComment,
+                jobId: job.id
+            });
+            setComments(prev => [response.data, ...prev]);
+            setNewComment('');
+        } catch (error) {
+            console.error('Failed to post comment:', error);
+            message.error("Failed to post comment.");
+        }
+    };
+
 
     const columnOptions = columns.map(column => ({
         value: column.id,
@@ -209,7 +251,9 @@ const JobDetail: React.FC<JobDetailProps> = ({
                         fetchCurrentData={async () => {
                             const latestJob = await api.get(`job/${currentJob.id}`).then(res => res.data);
                             return {
-                                labels: Array.isArray(latestJob.labels) ? latestJob.labels.map(l => l.id).filter(id => typeof id === 'string') : [],
+                                labels: Array.isArray(latestJob.labels)
+                                    ? latestJob.labels.map(l => l.id).filter(id => typeof id === 'string')
+                                    : [],
                                 version: latestJob.version
                             };
                         }}
@@ -256,6 +300,48 @@ const JobDetail: React.FC<JobDetailProps> = ({
                             description="No edit history available"
                             style={{ marginTop: 40 }}
                         />
+                    )}
+                </div>
+            ),
+        },
+      {
+            key: '4',
+            label: 'Comments',
+            children: (
+                <div style={{ padding: 20 }}>
+                    <Title level={4}>Comments</Title>
+                    {loadingComments ? (
+                        <Spin />
+                    ) : (
+                        <>
+                            <List
+                                dataSource={comments}
+                                itemLayout="horizontal"
+                                renderItem={item => (
+                                    <List.Item>
+                                        <List.Item.Meta
+                                            title={item.creator?.userName || "Unknown"}
+                                            description={item.contents}
+                                        />
+                                    </List.Item>
+                                )}
+                            />
+                            <Input.TextArea
+                                rows={2}
+                                placeholder="Add a comment..."
+                                value={newComment}
+                                onChange={e => setNewComment(e.target.value)}
+                                style={{ marginTop: 12 }}
+                            />
+                            <Button
+                                type="primary"
+                                onClick={postComment}
+                                style={{ marginTop: 8 }}
+                                disabled={!newComment.trim()}
+                            >
+                                Post Comment
+                            </Button>
+                        </>
                     )}
                 </div>
             ),
@@ -320,3 +406,4 @@ const JobDetail: React.FC<JobDetailProps> = ({
 };
 
 export default JobDetail;
+
