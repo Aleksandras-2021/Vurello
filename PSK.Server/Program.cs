@@ -15,7 +15,6 @@ using Autofac.Extras.DynamicProxy;
 using PSK.Server.Interceptors;
 using Microsoft.Extensions.Options;
 using PSK.Server.Repository;
-using Autofac.Core;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -192,6 +191,26 @@ app.MapStaticAssets();
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
+}
+
+using (var scope = app.Services.CreateScope())
+{
+    var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+
+    var retries = 10;
+    while (retries > 0)
+    {
+        try
+        {
+            db.Database.Migrate();
+            break;
+        }
+        catch
+        {
+            retries--;
+            Thread.Sleep(3000);
+        }
+    }
 }
 
 app.UseHttpsRedirection();

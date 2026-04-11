@@ -6,6 +6,9 @@
 3. `dotnet run --launch-profile "https"`
 4.  `OR click run button in IDE`
 
+### Troubleshooting
+1. If failed to launch frontend on windows, try `net stop winnat` and then `net start winnat`
+
 
 #### Preview images:
 Team board

@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { RJSFSchema } from '@rjsf/utils';
+import {API_URL } from "./API"
 
 interface SchemaCache {
     schemas: Record<string, RJSFSchema>;
@@ -19,7 +20,7 @@ export const loadAllSchemas = async (): Promise<void> => {
     if (schemaCache.isLoaded) return;
 
     try {
-        const response = await axios.get('https://localhost:7285/swagger/v1/swagger.json');
+        const response = await axios.get(`${API_URL}/swagger/v1/swagger.json`);
         const swaggerDoc = response.data;
 
         if (!swaggerDoc.components?.schemas) {

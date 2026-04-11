@@ -1,9 +1,10 @@
 import axios from 'axios';
 import { toast } from 'react-toastify';
 
+export const API_URL = import.meta.env.VITE_API_URL;
 
 export const api = axios.create({
-    baseURL: 'https://localhost:7285/api/',
+    baseURL: `${API_URL}/api/`,
 });
 
 let refreshTokenFn: (() => Promise<string | null>) | null = null;

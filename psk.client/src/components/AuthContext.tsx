@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
 import { jwtDecode } from 'jwt-decode';
-import { setRefreshTokenFn } from './API';
+import { setRefreshTokenFn,API_URL } from './API';
 import axios from 'axios';
 
 interface AuthContextType {
@@ -35,7 +35,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         setRefreshTokenFn(async () => {
             try {
                 const response = await axios.post(
-                    `https://localhost:7285/api/auth/refresh/${token}`,
+                    `${API_URL}/api/auth/refresh/${token}`,
                     null,
                     {
                         headers: {
