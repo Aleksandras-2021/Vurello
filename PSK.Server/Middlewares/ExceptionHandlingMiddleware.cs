@@ -1,9 +1,9 @@
 ﻿namespace PSK.Server.Middlewares;
 
 using Microsoft.AspNetCore.Mvc;
-using System.Data.Common;
 using Microsoft.EntityFrameworkCore;
-using System.Text.Json;
+using Npgsql;
+using System.Data.Common;
 
 public class ExceptionHandlingMiddleware
 {

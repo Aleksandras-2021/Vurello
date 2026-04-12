@@ -39,7 +39,12 @@ namespace PSK.Server.Controllers
                     return Ok(new { Token = token });
                 }
 
-                return BadRequest(result.Errors);
+                return BadRequest(new ProblemDetails
+                {
+                    Status = StatusCodes.Status400BadRequest,
+                    Title = "Registration failed",
+                    Detail = string.Join(", ", result.Errors.Select(e => e.Description))
+                });
             }
 
             return BadRequest(ModelState);
