@@ -12,7 +12,7 @@ services:
   server:
     build: ./PSK.Server
     ports:
-      - "8080"
+      - "5000:8080"
     depends_on:
       - db
     environment:
@@ -22,7 +22,7 @@ services:
   client:
     build: ./psk.client
     ports:
-      - "80"
+      - "3000:80"
     depends_on:
       - server
     environment:
