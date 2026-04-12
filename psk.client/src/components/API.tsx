@@ -55,11 +55,13 @@ api.interceptors.response.use(
         const response = error.response;
 
         if (response?.data && typeof response.data === 'object') {
-            const { title, detail, message } = response.data;
+            const { title, detail, message} = response.data;
             const status = response.status;
 
             const errorMessage =
-                title || detail || message || `An error occurred (status ${status || 'unknown'})`;
+                title && detail
+                    ? `${title}\n${detail}`
+                    :  title ?? detail ?? message ?? `An error occurred (status ${status ?? 'unknown'})`;
 
             toast.error(errorMessage, {
                 position: 'top-right',
