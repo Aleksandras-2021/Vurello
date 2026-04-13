@@ -7,6 +7,8 @@
     <SpaRoot>..\psk.client</SpaRoot>
     <SpaProxyLaunchCommand>npm run dev</SpaProxyLaunchCommand>
     <SpaProxyServerUrl>https://localhost:60673</SpaProxyServerUrl>
+    
+
   </PropertyGroup>
 
   <ItemGroup>

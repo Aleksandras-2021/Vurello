@@ -94,7 +94,7 @@ builder.Services.AddScoped<IGenericRepository<Job>, GenericRepository<Job>>();
 builder.Services.AddScoped<IGenericRepository<Board>, GenericRepository<Board>>();
 builder.Services.AddScoped<IGenericRepository<BoardColumn>, GenericRepository<BoardColumn>>();
 builder.Services.AddScoped<IJobService, JobService>();
-
+builder.Services.AddScoped<IAuthService, AuthService>();
 
 builder.Services.AddHttpContextAccessor();
 
