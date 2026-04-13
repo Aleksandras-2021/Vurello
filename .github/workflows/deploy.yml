@@ -41,6 +41,7 @@ jobs:
         key: ${{ secrets.EC2_SSH_KEY }}
         source: "server.tar,client.tar,docker-compose.yml"
         target: "~/Vurello"
+        overwrite: true
 
     #  Deploy on EC2
     - name: SSH & Deploy
