@@ -121,7 +121,7 @@ const Navbar: React.FC = () => {
                     zIndex: 99,
                 }}
             >
-                kREDDIToriai
+                Demo
             </div>
         </>
     );

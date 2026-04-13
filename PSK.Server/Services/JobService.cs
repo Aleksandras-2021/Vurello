@@ -1,7 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore;
-using PSK.Server.Data.Entities;
+﻿using PSK.Server.Data.Entities;
 using PSK.Server.Services;
-using PSK.Server.Specifications.JobSpecifications;
 using PSK.Server.Specifications.LabelSpecifications;
 using PSK.Server.Specifications.BoardColumnSpecifications;
 using PSK.Server.Misc;

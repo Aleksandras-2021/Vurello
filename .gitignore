@@ -2,3 +2,7 @@
 
 .idea/
 PSK.log
+/psk.tests/bin
+/psk.tests/obj
+.env
+psk.client/.env

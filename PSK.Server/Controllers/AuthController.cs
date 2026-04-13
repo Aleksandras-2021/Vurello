@@ -1,135 +1,48 @@
-﻿using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.IdentityModel.Tokens;
+﻿using Microsoft.AspNetCore.Mvc;
 using PSK.Server.Data.Entities;
-using System.IdentityModel.Tokens.Jwt;
-using System.Security.Claims;
-using System.Text;
+using PSK.Server.Services;
 
-namespace PSK.Server.Controllers
+[ApiController]
+[Route("api/[controller]")]
+public class AuthController : ControllerBase
 {
-    [Route("api/[controller]")]
-    [ApiController]
-    public class AuthController : ControllerBase
+    private readonly IAuthService _authService;
+
+    public AuthController(IAuthService authService)
     {
-        private readonly UserManager<User> _userManager;
-        private readonly SignInManager<User> _signInManager;
+        _authService = authService;
+    }
 
-        public AuthController(UserManager<User> userManager, SignInManager<User> signInManager)
-        {
-            _userManager = userManager;
-            _signInManager = signInManager;
-        }
+    [HttpPost("register")]
+    public async Task<IActionResult> Register(Register model)
+    {
+        var token = await _authService.RegisterAsync(model);
 
-        [HttpPost("register")]
-        public async Task<IActionResult> Register([FromBody] Register model)
-        {
-            if (ModelState.IsValid)
-            {
-                var user = new User
-                {
-                    UserName = model.Username,
-                };
+        if (token == null)
+            return BadRequest("Registration failed");
 
-                var result = await _userManager.CreateAsync(user, model.Password);
+        return Ok(new { Token = token });
+    }
 
-                if (result.Succeeded)
-                {
-                    var token = GenerateJwtToken(user);
-                    return Ok(new { Token = token });
-                }
+    [HttpPost("login")]
+    public async Task<IActionResult> Login(Login model)
+    {
+        var token = await _authService.LoginAsync(model);
 
-                return BadRequest(new ProblemDetails
-                {
-                    Status = StatusCodes.Status400BadRequest,
-                    Title = "Registration failed",
-                    Detail = string.Join(", ", result.Errors.Select(e => e.Description))
-                });
-            }
+        if (token == null)
+            return Unauthorized();
 
-            return BadRequest(ModelState);
-        }
+        return Ok(new { Token = token });
+    }
 
-        [HttpPost("login")]
-        public async Task<IActionResult> Login([FromBody] Login model)
-        {
-            var user = await _userManager.FindByNameAsync(model.Username);
+    [HttpPost("refresh/{token}")]
+    public async Task<IActionResult> Refresh(string token)
+    {
+        var newToken = await _authService.RefreshAsync(token);
 
-            if (user == null || !await _userManager.CheckPasswordAsync(user, model.Password))
-            {
-                return Unauthorized(new { message = "Incorrect login information" });
-            }
+        if (newToken == null)
+            return Unauthorized();
 
-            var token = GenerateJwtToken(user);
-            return Ok(new { Token = token });
-        }
-
-        [HttpPost("refresh/{token}")]
-        public IActionResult Refresh(string token)
-        {
-            try
-            {
-                var handler = new JwtSecurityTokenHandler();
-                var jwtToken = handler.ReadToken(token) as JwtSecurityToken;
-
-                if (jwtToken == null)
-                {
-                    return Unauthorized(new { message = "Invalid token" });
-                }
-
-                var expirationDate = jwtToken.ValidTo;
-                var currentDate = DateTime.UtcNow;
-
-                if (expirationDate - currentDate <= TimeSpan.FromHours(1))
-                {
-                    var userId = jwtToken.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier)?.Value;
-
-                    if (userId == null)
-                    {
-                        return Unauthorized(new { message = "Invalid token" });
-                    }
-
-                    var user = _userManager.FindByIdAsync(userId).Result;
-
-                    if (user == null)
-                    {
-                        return Unauthorized(new { message = "User not found" });
-                    }
-
-                    var newToken = GenerateJwtToken(user);
-                    return Ok(new { Token = newToken });
-                }
-
-                return Ok(new { Token = token });
-            }
-            catch (Exception ex)
-            {
-                return BadRequest(new { message = ex.Message });
-            }
-        }
-
-        private string GenerateJwtToken(User user)
-        {
-            var claims = new[]
-            {
-                new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
-                new Claim(ClaimTypes.Name, user.UserName),
-                new Claim("userId", user.Id.ToString()),
-            };
-
-            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes("SecretSecret123...SecretAAAAAAAAAAA"));
-
-            var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
-
-            var token = new JwtSecurityToken(
-                "Issuer",
-                "Audience",
-                claims,
-                expires: DateTime.Now.AddHours(2),
-                signingCredentials: creds
-            );
-
-            return new JwtSecurityTokenHandler().WriteToken(token);
-        }
+        return Ok(new { Token = newToken });
     }
 }

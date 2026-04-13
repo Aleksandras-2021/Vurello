@@ -1,5 +1,4 @@
 ﻿using System.Data;
-using System.Security.Claims;
 using Microsoft.AspNetCore.Identity;
 using PSK.Server.Data.Entities;
 using PSK.Server.DTOs;
@@ -38,18 +37,6 @@ public class TeamService : GenericService<Team, TeamCreate, TeamUpdate>, ITeamSe
     {
         _repository.UpdateVersion(entity, update.Version);
     }
-
-    //public override async Task<bool> AuthorizeAsync(Guid id, ClaimsPrincipal user)
-    //{
-    //    var userId = _userContext.GetUserId(user).ToString();
-    //    var team = await _repository.SingleOrDefaultAsync(
-    //        new GetTeamForAuthorizationSpec(id));
-    //    if (team == null)
-    //    {
-    //        throw new KeyNotFoundException("Team wiht ID {id} not found.");
-    //    }
-    //    return team.CreatorId.ToString() == userId;
-    //}
 
     public void AddUserToTeam(Team team, User user)
     {
