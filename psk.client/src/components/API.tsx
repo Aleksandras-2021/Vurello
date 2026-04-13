@@ -1,11 +1,7 @@
 import axios from 'axios';
 import { toast } from 'react-toastify';
 
-const isLocalHost = import.meta.env.VITE_IS_LOCAL_HOST === 'true';
-
-export const API_URL = isLocalHost
-    ? import.meta.env.VITE_LOCAL_API_URL
-    : import.meta.env.VITE_API_URL;
+export const API_URL = import.meta.env.VITE_API_URL;
 
 export const api = axios.create({
     baseURL: `${API_URL}/api/`,
