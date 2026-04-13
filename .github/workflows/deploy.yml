@@ -31,6 +31,9 @@ jobs:
       run: |
         docker save vurello-server -o server.tar
         docker save vurello-client -o client.tar
+    
+    - name: Fix permissions
+      run: chmod +r server.tar client.tar
 
     # Copy files to EC2
     - name: Copy files to EC2
