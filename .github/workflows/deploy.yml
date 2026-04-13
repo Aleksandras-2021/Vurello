@@ -52,8 +52,8 @@ jobs:
         script: |
           cd ~/Vurello
 
-          docker load -i server.tar
-          docker load -i client.tar
+          sudo docker load -i server.tar
+          sudo docker load -i client.tar
 
           docker compose down
           docker compose up -d
