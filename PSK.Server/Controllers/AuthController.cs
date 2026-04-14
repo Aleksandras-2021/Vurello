@@ -16,12 +16,17 @@ public class AuthController : ControllerBase
     [HttpPost("register")]
     public async Task<IActionResult> Register(Register model)
     {
-        var token = await _authService.RegisterAsync(model);
+        var result = await _authService.RegisterAsync(model);
 
-        if (token == null)
-            return BadRequest("Registration failed");
+        if (result.error != null)
+            return BadRequest(new ProblemDetails
+            {
+                Status = StatusCodes.Status400BadRequest,
+                Title = "Registration failed",
+                Detail = result.error
+            });
 
-        return Ok(new { Token = token });
+        return Ok(new { Token = result.token });
     }
 
     [HttpPost("login")]

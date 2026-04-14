@@ -16,6 +16,7 @@ using PSK.Server.Interceptors;
 using Microsoft.Extensions.Options;
 using PSK.Server.Repository;
 
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
@@ -26,7 +27,6 @@ builder.Services.AddControllers()
     {
         options.JsonSerializerOptions.ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles;
     });
-
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
@@ -79,6 +79,7 @@ builder.Host.ConfigureContainer<ContainerBuilder>(containerBuilder =>
     }
 
 });
+builder.Services.AddSingleton<IConfiguration>(builder.Configuration);
 
 builder.Services.AddScoped<IUserContext, UserContext>();
 builder.Services.AddScoped<IBoardService, BoardService>();
@@ -113,7 +114,7 @@ builder.Host.ConfigureContainer<ContainerBuilder>(containerBuilder =>
         var httpContextAccessor = sp.GetRequiredService<IHttpContextAccessor>();
         var dbContext = sp.GetRequiredService<AppDbContext>();
 
-        var projectRoot = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, @"..\..\..\..")); //log to Kredditoriai/psk.log
+        var projectRoot = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, @"..\..\..\.."));
         var fullPath = Path.Combine(projectRoot, options.LogFilePath);
 
         return new LoggingInterceptor(fullPath, httpContextAccessor, options.Enabled, dbContext);
@@ -153,7 +154,7 @@ builder.Services.AddAuthentication(options =>
         ValidateLifetime = true,
         ValidIssuer = "Issuer",
         ValidAudience = "Audience",
-        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes("SecretSecret123...SecretAAAAAAAAAAA"))
+        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(""+builder.Configuration["JWT_KEY"]))
     };
 });
 
