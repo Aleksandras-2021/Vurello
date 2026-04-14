@@ -3,6 +3,11 @@ name: Build, Test, Deploy
 on:
   push:
     branches: [ "main" ]
+    paths:
+      - 'PSK.Server/**'
+      - 'psk.client/**'
+      - 'docker-compose.prod.yml'
+      - '.github/workflows/**'
 
 jobs:
   build-test-deploy:
