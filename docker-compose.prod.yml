@@ -17,7 +17,7 @@ services:
     environment:
       - ASPNETCORE_ENVIRONMENT=Production
       - ConnectionStrings__DefaultConnection=Host=db;Port=5432;Database=${POSTGRES_DB};Username=${POSTGRES_USER};Password=${POSTGRES_PASSWORD}
-      - JWT_SECRET=${JWT_SECRET}
+      - JWT_KEY=${JWT_KEY}
   client:
     image: vurello-client:latest
     ports:

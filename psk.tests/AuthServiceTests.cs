@@ -1,6 +1,7 @@
 ﻿using FluentAssertions;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc.Testing;
+using Microsoft.Extensions.Configuration;
 using Moq;
 using PSK.Server.Data.Entities;
 using PSK.Server.Services;
@@ -9,6 +10,13 @@ namespace psk.tests;
 
 public class AuthServiceTests
 {
+        
+    IConfiguration config = new ConfigurationBuilder()
+    .AddInMemoryCollection(new Dictionary<string, string>
+    {
+    { "JWT_KEY", "JWT_KEY_FOR_TESTING_RANDOM_:87439874389349873" }
+    })
+    .Build();
 
     private Mock<UserManager<User>> GetUserManagerMock()
     {
@@ -27,7 +35,7 @@ public class AuthServiceTests
             .Setup(x => x.CreateAsync(It.IsAny<User>(), It.IsAny<string>()))
             .ReturnsAsync(IdentityResult.Success);
 
-        var service = new AuthService(userManagerMock.Object);
+        var service = new AuthService(userManagerMock.Object, config);
 
         var model = new Register
         {
@@ -37,7 +45,9 @@ public class AuthServiceTests
 
         var result = await service.RegisterAsync(model);
 
-        Assert.NotNull(result);
+
+        Assert.Null(result.error);
+        Assert.NotNull(result.token);
     }
 
     [Fact]
@@ -49,11 +59,12 @@ public class AuthServiceTests
             .Setup(x => x.CreateAsync(It.IsAny<User>(), It.IsAny<string>()))
             .ReturnsAsync(IdentityResult.Failed());
 
-        var service = new AuthService(userManagerMock.Object);
+        var service = new AuthService(userManagerMock.Object,config);
 
         var result = await service.RegisterAsync(new Register());
 
-        Assert.Null(result);
+        Assert.NotNull(result.error);
+        Assert.Null(result.token);
     }
 
     [Fact]
@@ -71,7 +82,7 @@ public class AuthServiceTests
             .Setup(x => x.CheckPasswordAsync(user, "Password123"))
             .ReturnsAsync(true);
 
-        var service = new AuthService(userManagerMock.Object);
+        var service = new AuthService(userManagerMock.Object,config);
 
         var result = await service.LoginAsync(new Login
         {
@@ -97,7 +108,7 @@ public class AuthServiceTests
             .Setup(x => x.CheckPasswordAsync(user, "incorrectPassword"))
             .ReturnsAsync(false);
 
-        var service = new AuthService(userManagerMock.Object);
+        var service = new AuthService(userManagerMock.Object, config);
 
         var result = await service.LoginAsync(new Login
         {
