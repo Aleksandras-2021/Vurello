@@ -4,12 +4,11 @@ using PSK.Server.Data.Entities;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
-
 namespace PSK.Server.Services;
 
 public interface IAuthService
 {
-    Task<string?> RegisterAsync(Register model);
+    Task<(string? token, string? error)> RegisterAsync(Register model);
     Task<string?> LoginAsync(Login model);
     Task<string?> RefreshAsync(string token);
 }
@@ -17,13 +16,16 @@ public interface IAuthService
 public class AuthService : IAuthService
 {
     private readonly UserManager<User> _userManager;
+    private readonly string _jwtSecret;
 
-    public AuthService(UserManager<User> userManager)
+
+    public AuthService(UserManager<User> userManager, IConfiguration config)
     {
         _userManager = userManager;
+        _jwtSecret = "" + config["JWT_KEY"];
     }
 
-    public async Task<string?> RegisterAsync(Register model)
+    public async Task<(string? token, string? error)> RegisterAsync(Register model)
     {
         var user = new User
         {
@@ -32,10 +34,13 @@ public class AuthService : IAuthService
 
         var result = await _userManager.CreateAsync(user, model.Password);
 
-        if (!result.Succeeded)
-            return null;
+        if (!result.Succeeded) {
+            string errorStrings = string.Join(", ", result.Errors.Select(e => e.Description));
+            return (null, errorStrings);       
+        }
 
-        return GenerateJwtToken(user);
+
+        return (GenerateJwtToken(user),null);
     }
 
     public async Task<string?> LoginAsync(Login model)
@@ -86,7 +91,7 @@ public class AuthService : IAuthService
     };
 
         var key = new SymmetricSecurityKey(
-            Encoding.UTF8.GetBytes("SecretSecret123...SecretAAAAAAAAAAA"));
+            Encoding.UTF8.GetBytes(_jwtSecret));
 
         var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
