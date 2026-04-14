@@ -20,7 +20,7 @@ jobs:
 
     #  Run tests
     - name: Run xUnit tests
-      run: dotnet test
+      run: dotnet test psk.tests/psk.tests.csproj
 
     # Build Docker images
     - name: Build docker images

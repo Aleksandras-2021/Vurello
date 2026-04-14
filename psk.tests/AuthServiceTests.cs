@@ -1,7 +1,7 @@
-﻿using FluentAssertions;
-using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.Mvc.Testing;
+﻿using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using Moq;
 using PSK.Server.Data.Entities;
 using PSK.Server.Services;
@@ -21,9 +21,20 @@ public class AuthServiceTests
     private Mock<UserManager<User>> GetUserManagerMock()
     {
         var store = new Mock<IUserStore<User>>();
-        return new Mock<UserManager<User>>(
+
+        var mock = new Mock<UserManager<User>>(
             store.Object,
-            null, null, null, null, null, null, null, null);
+            new Mock<IOptions<IdentityOptions>>().Object,
+            new Mock<IPasswordHasher<User>>().Object,
+            new IUserValidator<User>[0],
+            new IPasswordValidator<User>[0],
+            new Mock<ILookupNormalizer>().Object,
+            new IdentityErrorDescriber(),
+            new Mock<IServiceProvider>().Object,
+            new Mock<ILogger<UserManager<User>>>().Object
+        );
+
+        return mock;
     }
 
     [Fact]
